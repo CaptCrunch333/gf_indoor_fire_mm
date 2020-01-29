@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
 
     ROSUnit* FireDetectionStateUpdaterClnt = mainROSUnit_Factory_main.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "gf_indoor_fire_detection/set_state");
 	ROSUnit* WaterExtStateUpdaterClnt = mainROSUnit_Factory_main.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "water_ext/set_mission_state");
+    ROSUnit* WateLevelUpdateRequesterClnt = mainROSUnit_Factory_main.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "water_ext/get_water_level"); 
     ROSUnit* UGVNavCtrlUpdaterClnt = mainROSUnit_Factory_main.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "ugv_nav/set_mission_state");
 
     // ********************************************************************************
@@ -59,7 +60,10 @@ int main(int argc, char** argv) {
     //Water Extinguishing States
     IntegerMsg ext_ArmedIdle;
     ext_ArmedIdle.data = (int)WaterFireExtState::Armed_Idle;
-    FlightElement* set_armed_idles = new SendMessage((DataMessage*)&ext_ArmedIdle);
+    FlightElement* set_armed_idle = new SendMessage((DataMessage*)&ext_ArmedIdle);
+    IntegerMsg ext_Unarmed;
+    ext_Unarmed.data = (int)WaterFireExtState::Unarmed;
+    FlightElement* set_unarmed_state = new SendMessage((DataMessage*)&ext_Unarmed);
     IntegerMsg ext_Idle; //resets water level
     ext_Idle.data = (int)WaterFireExtState::Idle;
     FlightElement* set_idle_state = new SendMessage((DataMessage*)&ext_Idle);
@@ -70,6 +74,9 @@ int main(int argc, char** argv) {
     IntegerMsg ugv_HeadingTowardsEntrance;
     ugv_HeadingTowardsEntrance.data = (int)UGVNavState::HEADINGTOWARDSENTRANCE;
     FlightElement* set_heading_towards_entrance = new SendMessage((DataMessage*)&ugv_HeadingTowardsEntrance);
+    IntegerMsg ugv_ExtinguishingFire;
+    ugv_ExtinguishingFire.data = (int)UGVNavState::EXTINGUISHINGFIRE;
+    FlightElement* set_extinguishing_fire = new SendMessage((DataMessage*)&ugv_ExtinguishingFire);
     IntegerMsg ugv_ReturningToBase;
     ugv_ReturningToBase.data = (int)UGVNavState::RETURNINGTOBASE;
     FlightElement* set_returning_to_base = new SendMessage((DataMessage*)&ugv_ReturningToBase);
@@ -103,144 +110,137 @@ int main(int argc, char** argv) {
     InternalSystemStateCondition* finished_condition = new InternalSystemStateCondition(GFMMState::FINISHED);
     WaitForCondition* finished_check = new WaitForCondition((Condition*)finished_condition);
 
-    // ExternalSystemStateCondition* FireDetection_ScanningWithNoDetection = new ExternalSystemStateCondition(0);
-    // WaitForCondition* outdoor_wall_fire_detection_idle_check = new WaitForCondition((Condition*)outdoor_wall_fire_detection_idle);
+    ExternalSystemStateCondition* FireDetection_Error = new ExternalSystemStateCondition((int)FireDetectionState::MALFUNCTION);
+    WaitForCondition* fire_detection_error_check = new WaitForCondition((Condition*)FireDetection_Error);
+
+    ExternalSystemStateCondition* FireDetection_Idle = new ExternalSystemStateCondition((int)FireDetectionState::IDLE);
+    WaitForCondition* fire_detection_idle_check = new WaitForCondition((Condition*)FireDetection_Idle);
+
+    ExternalSystemStateCondition* FireDetection_ScanningWithLocated = new ExternalSystemStateCondition((int)FireDetectionState::IDLE);
+    WaitForCondition* fire_detection_scanning_with_located_check = new WaitForCondition((Condition*)FireDetection_ScanningWithLocated);
+
+    ExternalSystemStateCondition* WaterExt_Unarmed = new ExternalSystemStateCondition((int)WaterFireExtState::Unarmed);
+    WaitForCondition* water_ext_unarmed_check = new WaitForCondition((Condition*)WaterExt_Unarmed);
+
+    ExternalSystemStateCondition* WaterExt_ArmedIdle = new ExternalSystemStateCondition((int)WaterFireExtState::Armed_Idle);
+    WaitForCondition* water_ext_armed_idle_check = new WaitForCondition((Condition*)WaterExt_ArmedIdle);
+
+    ExternalSystemStateCondition* WaterExt_ArmedExtinguishing = new ExternalSystemStateCondition((int)WaterFireExtState::Armed_Extinguishing);
+    WaitForCondition* water_ext_armed_extinguishing_check = new WaitForCondition((Condition*)WaterExt_ArmedExtinguishing);
+
+    ExternalSystemStateCondition* WaterExt_ArmedExtinguished = new ExternalSystemStateCondition((int)WaterFireExtState::Armed_Extinguished);
+    WaitForCondition* water_ext_armed_extinguished_check = new WaitForCondition((Condition*)WaterExt_ArmedExtinguished);
+
+    ExternalSystemStateCondition* UGVNav_Idle = new ExternalSystemStateCondition((int)UGVNavState::IDLE);
+    WaitForCondition* ugv_nav_idle_check = new WaitForCondition((Condition*)UGVNav_Idle);
+
+    ExternalSystemStateCondition* UGVNav_SearchingForFire = new ExternalSystemStateCondition((int)UGVNavState::SEARCHINGFORFIRE);
+    WaitForCondition* ugv_nav_searching_for_fire_check = new WaitForCondition((Condition*)UGVNav_SearchingForFire);
+
+    ExternalSystemStateCondition* UGVNav_HeadingTowardsFire = new ExternalSystemStateCondition((int)UGVNavState::SEARCHINGFORFIRE);
+    WaitForCondition* ugv_nav_heading_towards_fire_check = new WaitForCondition((Condition*)UGVNav_HeadingTowardsFire);
+
+    ExternalSystemStateCondition* UGVNav_AlignedWithFire = new ExternalSystemStateCondition((int)UGVNavState::UGVALIGNEDWITHTARGET);
+    WaitForCondition* ugv_nav_aligned_with_fire_check = new WaitForCondition((Condition*)UGVNav_AlignedWithFire);
+
+    ExternalSystemStateCondition* UGVNav_ReachedBase = new ExternalSystemStateCondition((int)UGVNavState::REACHEDBASE);
+    WaitForCondition* ugv_nav_reached_base_check = new WaitForCondition((Condition*)UGVNav_ReachedBase);
+
+    // ********************************************************************************
+    // ****************************** SYSTEM CONNECTIONS ******************************
+
+    InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_error);
+    InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_not_ready);
+    InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_ready_to_start);
+    InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_heading_toward_entrance);
+    InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_searching_for_fire);
+    InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_approaching_fire);
+    InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_extinguishing_fire);
+    InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_return_to_base);
+    InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_finished);
+
+    FireDetectionStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*) FireDetection_Error);
+    FireDetectionStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*) FireDetection_Idle);
+    FireDetectionStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*) FireDetection_ScanningWithLocated);
+
+    WaterExtStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*) WaterExt_Unarmed);
+    WaterExtStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*) WaterExt_ArmedIdle);
+    WaterExtStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*) WaterExt_ArmedExtinguishing);
+    WaterExtStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*) WaterExt_ArmedExtinguished);
+
+    UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_Idle);
+    UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_SearchingForFire);
+    UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_HeadingTowardsFire);
+    UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_AlignedWithFire);
+    UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_ReachedBase);
+
+    set_scanning_with_no_detection->add_callback_msg_receiver((msg_receiver*) FireDetectionStateUpdaterClnt);
+
+    set_armed_idle->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
+    set_unarmed_state->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
+    set_idle_state->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
+    upload_water_level->add_callback_msg_receiver((msg_receiver*) WateLevelUpdateRequesterClnt);
+
+    set_heading_towards_entrance->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
+    set_extinguishing_fire->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
+    set_returning_to_base->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
+
+    // ********************************************************************************
+    // ********************************** PIPELINES ***********************************
+    FlightPipeline not_ready_pipeline, ready_to_start_pipeline, heading_towards_entrance_pipeline,
+                   searching_for_fire_pipeline, approaching_fire_pipeline, extinguishing_fire_pipeline, return_to_base_pipeline,
+                   error_pipeline;// finished_pipeline;
+
+    // TODO: add error check
+
+    not_ready_pipeline.addElement((FlightElement*)not_ready_check);
+    not_ready_pipeline.addElement((FlightElement*)fire_detection_idle_check);
+    not_ready_pipeline.addElement((FlightElement*)water_ext_armed_idle_check);
+    not_ready_pipeline.addElement((FlightElement*)ugv_nav_idle_check);
+    not_ready_pipeline.addElement((FlightElement*)cs_to_ready_to_start);
     
-    // ExternalSystemStateCondition* uav_control_landed = new ExternalSystemStateCondition(1);
-    // WaitForCondition* uav_control_landed_check = new WaitForCondition((Condition*)uav_control_landed);
+    ready_to_start_pipeline.addElement((FlightElement*)ready_to_start_check);
+    ready_to_start_pipeline.addElement((FlightElement*)set_heading_towards_entrance);
+    ready_to_start_pipeline.addElement((FlightElement*)cs_to_heading_toward_entrance);
     
-    // ExternalSystemStateCondition* uav_control_following_trajectory = new ExternalSystemStateCondition(6);
-    // WaitForCondition* uav_control_following_trajectory_check = new WaitForCondition((Condition*)uav_control_following_trajectory);
+    heading_towards_entrance_pipeline.addElement((FlightElement*)heading_towards_entrance_check);
+    heading_towards_entrance_pipeline.addElement((FlightElement*)ugv_nav_searching_for_fire_check);
+    heading_towards_entrance_pipeline.addElement((FlightElement*)set_scanning_with_no_detection);
+    heading_towards_entrance_pipeline.addElement((FlightElement*)cs_to_searching_for_fire);
 
-    // ExternalSystemStateCondition* uav_control_hovering = new ExternalSystemStateCondition(7);
-    // WaitForCondition* uav_control_hovering_check = new WaitForCondition((Condition*)uav_control_hovering);
+    searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
+    searching_for_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_located_check);
+    searching_for_fire_pipeline.addElement((FlightElement*)ugv_nav_heading_towards_fire_check);
+    searching_for_fire_pipeline.addElement((FlightElement*)cs_to_approaching_fire);
 
-    // ExternalSystemStateCondition* water_fire_extinguishing_idle = new ExternalSystemStateCondition(0);
-    // WaitForCondition* water_fire_extinguishing_idle_check = new WaitForCondition((Condition*)water_fire_extinguishing_idle);
+    approaching_fire_pipeline.addElement((FlightElement*)approaching_fire_check);
+    approaching_fire_pipeline.addElement((FlightElement*)ugv_nav_aligned_with_fire_check);
+    approaching_fire_pipeline.addElement((FlightElement*)set_armed_idle);
+    approaching_fire_pipeline.addElement((FlightElement*)set_extinguishing_fire);
+    approaching_fire_pipeline.addElement((FlightElement*)cs_to_extinguishing_fire);
 
-    // ExternalSystemStateCondition* water_fire_extinguishing_extinguished = new ExternalSystemStateCondition(4);
-    // WaitForCondition* water_fire_extinguishing_extinguished_check = new WaitForCondition((Condition*)water_fire_extinguishing_extinguished);
-    
-    // ExternalSystemStateCondition* outdoor_navigation_idle = new ExternalSystemStateCondition(0);
-    // WaitForCondition* outdoor_navigation_idle_check = new WaitForCondition((Condition*)outdoor_navigation_idle);
-    
-    // ExternalSystemStateCondition* outdoor_navigation_all_wall_fire = new ExternalSystemStateCondition(1);
-    // WaitForCondition* outdoor_navigation_all_wall_fire_check = new WaitForCondition((Condition*)outdoor_navigation_all_wall_fire);
+    extinguishing_fire_pipeline.addElement((FlightElement*)extinguishing_fire_check);
+    extinguishing_fire_pipeline.addElement((FlightElement*)water_ext_armed_extinguished_check);
+    extinguishing_fire_pipeline.addElement((FlightElement*)set_returning_to_base);
+    extinguishing_fire_pipeline.addElement((FlightElement*)cs_to_return_to_base);
 
-    // //******************Connections******************
+    return_to_base_pipeline.addElement((FlightElement*) return_to_base_check);
+    return_to_base_pipeline.addElement((FlightElement*) ugv_nav_reached_base_check);
+    return_to_base_pipeline.addElement((FlightElement*) cs_to_finished);
 
-    // ros_set_system_state_srv->add_callback_msg_receiver((msg_receiver*)cs_to_not_ready);
-    // ros_set_system_state_srv->add_callback_msg_receiver((msg_receiver*)cs_to_ready_to_start);
-    // ros_set_system_state_srv->add_callback_msg_receiver((msg_receiver*)cs_to_scanning_outdoor);
-    // ros_set_system_state_srv->add_callback_msg_receiver((msg_receiver*)cs_to_approaching_outdoor);
-    // ros_set_system_state_srv->add_callback_msg_receiver((msg_receiver*)cs_to_extinguishing_outdoor);
-    // ros_set_system_state_srv->add_callback_msg_receiver((msg_receiver*)cs_to_return_to_base);
-    // ros_set_system_state_srv->add_callback_msg_receiver((msg_receiver*)cs_to_finished);
-    // ros_set_system_state_srv->add_callback_msg_receiver((msg_receiver*)cs_to_error);
+    //TODO: ask about finish pipeline
 
-    // ros_updt_fire_detection_state_srv->add_callback_msg_receiver((msg_receiver*)outdoor_wall_fire_detection_idle);
+    FlightScenario main_scenario;
+    main_scenario.AddFlightPipeline(&not_ready_pipeline);
+    main_scenario.AddFlightPipeline(&ready_to_start_pipeline);
+    main_scenario.AddFlightPipeline(&heading_towards_entrance_pipeline);
+    main_scenario.AddFlightPipeline(&searching_for_fire_pipeline);
+    main_scenario.AddFlightPipeline(&approaching_fire_pipeline);
+    main_scenario.AddFlightPipeline(&extinguishing_fire_pipeline);
+    main_scenario.AddFlightPipeline(&return_to_base_pipeline);
+    main_scenario.StartScenario();
 
-    // ros_updt_uav_control_state_srv->add_callback_msg_receiver((msg_receiver*)uav_control_landed);
-    // ros_updt_uav_control_state_srv->add_callback_msg_receiver((msg_receiver*)uav_control_following_trajectory);
-    // ros_updt_uav_control_state_srv->add_callback_msg_receiver((msg_receiver*)uav_control_hovering);
-
-    // ros_updt_water_ext_state_srv->add_callback_msg_receiver((msg_receiver*)water_fire_extinguishing_idle);
-    // ros_updt_water_ext_state_srv->add_callback_msg_receiver((msg_receiver*)water_fire_extinguishing_extinguished);
-
-    // ros_updt_outdoor_nav_state_srv->add_callback_msg_receiver((msg_receiver*)outdoor_navigation_idle);
-    // ros_updt_outdoor_nav_state_srv->add_callback_msg_receiver((msg_receiver*)outdoor_navigation_all_wall_fire);
-
-    // set_ignoring_state_outdoor_fire_detection->add_callback_msg_receiver((msg_receiver*)ros_set_fire_detection_state_clnt);
-    // trigger_upload_uav_scan_path->add_callback_msg_receiver((msg_receiver*)ros_trigger_uav_scan_path_clnt);
-    // set_scanning_state_outdoor_fire_detection->add_callback_msg_receiver((msg_receiver*)ros_set_fire_detection_state_clnt);
-    // trigger_upload_uav_fire_path->add_callback_msg_receiver((msg_receiver*)ros_trigger_uav_fire_path_clnt);
-    // set_arming_ext_state_fire_extinguishing->add_callback_msg_receiver((msg_receiver*)set_fire_extinguishing_state_clnt);
-    // trigger_upload_uav_home_path->add_callback_msg_receiver((msg_receiver*)ros_trigger_uav_home_path_clnt);
-    // set_taking_off_state_uav_control->add_callback_msg_receiver((msg_receiver*)ros_set_mission_state_clnt);
-    // set_landing_state_uav_control->add_callback_msg_receiver((msg_receiver*)ros_set_mission_state_clnt);
-    
-    // //**********************************************
-    // FlightPipeline not_ready_pipeline, ready_to_start_pipeline, scanning_outdoor_pipeline,
-    //                approach_outdoor_pipeline, extinguish_outdoor_pipeline, return_to_base_pipeline,
-    //                error_pipeline, finished_pipeline;
-
-    // //Check Current Mission State
-    // not_ready_pipeline.addElement((FlightElement*)not_ready_check);
-    // //Check if all systems are ready
-    // not_ready_pipeline.addElement((FlightElement*)outdoor_wall_fire_detection_idle_check);
-    // not_ready_pipeline.addElement((FlightElement*)uav_control_landed_check);
-    // not_ready_pipeline.addElement((FlightElement*)water_fire_extinguishing_idle_check);
-    // not_ready_pipeline.addElement((FlightElement*)outdoor_navigation_idle_check);
-    // //Change internal state to READY_TO_START
-    // not_ready_pipeline.addElement((FlightElement*)cs_to_ready_to_start);
-    
-    // //Check Current Mission State
-    // ready_to_start_pipeline.addElement((FlightElement*)ready_to_start_check);
-    // //Call set_mission_state (Outdoor Fire Detection) and set to Ignore
-    // ready_to_start_pipeline.addElement((FlightElement*)set_ignoring_state_outdoor_fire_detection);
-    // //Call set_mission_state (UAV_Control) and set to Taking_Off
-    // ready_to_start_pipeline.addElement((FlightElement*)set_taking_off_state_uav_control);
-    // //Trigger Upload_UAV_Scan_Path
-    // ready_to_start_pipeline.addElement((FlightElement*)trigger_upload_uav_scan_path);
-    // //Check if UAV is at "Following Trajectory"
-    // ready_to_start_pipeline.addElement((FlightElement*)uav_control_following_trajectory_check);
-    // //Change internal state to SCANNING_OUTDOOR
-    // ready_to_start_pipeline.addElement((FlightElement*)cs_to_scanning_outdoor);
-    // //Call set_mission_state (Outdoor Fire Detection) and set to Scanning
-    // ready_to_start_pipeline.addElement((FlightElement*)set_scanning_state_outdoor_fire_detection);
-    
-    // //Check Current Mission State
-    // scanning_outdoor_pipeline.addElement((FlightElement*)scanning_outdoor_check);
-    // //Check Outdoor Navigation is at "All wall fire detected"
-    // scanning_outdoor_pipeline.addElement((FlightElement*)outdoor_navigation_all_wall_fire_check);
-    // //Trigger Upload_UAV_Fire_Paths with a fire tag
-    // scanning_outdoor_pipeline.addElement((FlightElement*)trigger_upload_uav_fire_path);
-    // //Check if UAV is at "Following Trajectory"
-    // scanning_outdoor_pipeline.addElement((FlightElement*)uav_control_following_trajectory_check);
-    // //Change internal state to APPROACHING_OUTDOOR
-    // scanning_outdoor_pipeline.addElement((FlightElement*)cs_to_approaching_outdoor);
-
-    // //Check Current Mission State
-    // approach_outdoor_pipeline.addElement((FlightElement*)approach_outdoor_check);
-    // //Check if UAV is at "Hovering"
-    // approach_outdoor_pipeline.addElement((FlightElement*)uav_control_hovering_check);
-    // //Call set_mission_state (Fire Extinguishing) and set to Armed w/ Extinguishing
-    // approach_outdoor_pipeline.addElement((FlightElement*)set_arming_ext_state_fire_extinguishing);
-    // //Change internal state to EXTINGUISHING_OUTDOOR
-    // approach_outdoor_pipeline.addElement((FlightElement*)cs_to_extinguishing_outdoor);
-
-    // //Check Current Mission State
-    // extinguish_outdoor_pipeline.addElement((FlightElement*)extinguish_outdoor_check);
-    // //Check if Fire Extinguished is at "Extinguished"
-    // extinguish_outdoor_pipeline.addElement((FlightElement*)water_fire_extinguishing_extinguished_check);
-    // //Trigger UAV to go home
-    // extinguish_outdoor_pipeline.addElement((FlightElement*)trigger_upload_uav_home_path);
-    // //Check if UAV is at "Following Trajectory"
-    // extinguish_outdoor_pipeline.addElement((FlightElement*)uav_control_following_trajectory_check);
-    // //Change internal state to RETURNING_TO_BASE
-    // extinguish_outdoor_pipeline.addElement((FlightElement*)cs_to_return_to_base);
-
-    // //Check Current Mission State
-    // return_to_base_pipeline.addElement((FlightElement*)return_to_base_check);
-    // //Check if UAV is at "Hovering"
-    // return_to_base_pipeline.addElement((FlightElement*)uav_control_hovering_check);
-    // //Call set_mission_state (UAV_Control) and set to Landing
-    // return_to_base_pipeline.addElement((FlightElement*)set_landing_state_uav_control);
-    // //Change internal state to FINISHED
-    // return_to_base_pipeline.addElement((FlightElement*)cs_to_finished);
-
-    // //TODO Error Pipeline
-
-    // Logger::getAssignedLogger()->log("FlightScenario main_scenario",LoggerLevel::Info);
-    // FlightScenario main_scenario;
-    // main_scenario.AddFlightPipeline(&not_ready_pipeline);
-    // main_scenario.AddFlightPipeline(&ready_to_start_pipeline);
-    // main_scenario.AddFlightPipeline(&scanning_outdoor_pipeline);
-    // main_scenario.AddFlightPipeline(&approach_outdoor_pipeline);
-    // main_scenario.AddFlightPipeline(&extinguish_outdoor_pipeline);
-    // main_scenario.AddFlightPipeline(&return_to_base_pipeline);
-    // main_scenario.StartScenario();
-    // Logger::getAssignedLogger()->log("Main Done",LoggerLevel::Info);
+    Logger::getAssignedLogger()->log("GF Indoor Fire Mission Management Node Started",LoggerLevel::Info);
     
     while(ros::ok){
         ros::spinOnce();
