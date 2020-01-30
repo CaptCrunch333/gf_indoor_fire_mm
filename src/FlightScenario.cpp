@@ -30,7 +30,7 @@ void* FlightScenario::pipelineThreadStarter(void* arg){
         /* code */
     }
     
-    Logger::getAssignedLogger()->log("((FlightPipeline*)arg)->execute()",LoggerLevel::Info);
+    //Logger::getAssignedLogger()->log("((FlightPipeline*)arg)->execute()",LoggerLevel::Info);
     ((FlightPipeline*)arg)->execute();
     return 0;
 }

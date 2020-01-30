@@ -10,7 +10,6 @@ ChangeInternalState::~ChangeInternalState() {
 
 void ChangeInternalState::perform() {
     mainMissionStateManager.updateMissionState(m_new_state);
-    std::cout << "Current state: " << (int)m_new_state << std::endl;
 }
 
 void ChangeInternalState::receive_msg_data(DataMessage* t_msg){

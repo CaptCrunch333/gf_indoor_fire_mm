@@ -1,6 +1,3 @@
- #include "ros/ros.h"
-#include <iostream>
-#include "ROSUnit.hpp"
 #include "logger.hpp"
 #include "std_logger.hpp"
 #include "FlightElement.hpp"
@@ -49,39 +46,38 @@ int main(int argc, char** argv) {
     FlightElement* cs_to_extinguishing_fire = new ChangeInternalState(GFMMState::EXTINGUISHING_FIRE);
     FlightElement* cs_to_return_to_base = new ChangeInternalState(GFMMState::RETURNING_TO_BASE);
     FlightElement* cs_to_finished = new ChangeInternalState(GFMMState::FINISHED);
-    //                //
+    ////////////////////
 
     //External States //
     //GF Fire Detection States
     IntegerMsg detection_ScanningWithNoDetection;
     detection_ScanningWithNoDetection.data = (int)FireDetectionState::SCANNING_NO_FIRE_DETECTED;
-    FlightElement* set_scanning_with_no_detection = new SendMessage((DataMessage*)&detection_ScanningWithNoDetection);
+    FlightElement* detection_set_scanning_with_no_detection = new SendMessage((DataMessage*)&detection_ScanningWithNoDetection);
 
     //Water Extinguishing States
     IntegerMsg ext_ArmedIdle;
     ext_ArmedIdle.data = (int)WaterFireExtState::Armed_Idle;
-    FlightElement* set_armed_idle = new SendMessage((DataMessage*)&ext_ArmedIdle);
+    FlightElement* ext_set_armed_idle = new SendMessage((DataMessage*)&ext_ArmedIdle);
     IntegerMsg ext_Unarmed;
     ext_Unarmed.data = (int)WaterFireExtState::Unarmed;
-    FlightElement* set_unarmed_state = new SendMessage((DataMessage*)&ext_Unarmed);
+    FlightElement* ext_set_unarmed_state = new SendMessage((DataMessage*)&ext_Unarmed);
     IntegerMsg ext_Idle; //resets water level
     ext_Idle.data = (int)WaterFireExtState::Idle;
-    FlightElement* set_idle_state = new SendMessage((DataMessage*)&ext_Idle);
+    FlightElement* ext_set_idle_state = new SendMessage((DataMessage*)&ext_Idle);
     EmptyMsg ext_UploadWaterLevel;
-    FlightElement* upload_water_level = new SendMessage((DataMessage*)&ext_UploadWaterLevel);
+    FlightElement* ext_upload_water_level = new SendMessage((DataMessage*)&ext_UploadWaterLevel); //TODO: use
 
     //UGV Nav TODO: add utility
     IntegerMsg ugv_HeadingTowardsEntrance;
     ugv_HeadingTowardsEntrance.data = (int)UGVNavState::HEADINGTOWARDSENTRANCE;
-    FlightElement* set_heading_towards_entrance = new SendMessage((DataMessage*)&ugv_HeadingTowardsEntrance);
+    FlightElement* ugv_set_heading_towards_entrance = new SendMessage((DataMessage*)&ugv_HeadingTowardsEntrance);
     IntegerMsg ugv_ExtinguishingFire;
     ugv_ExtinguishingFire.data = (int)UGVNavState::EXTINGUISHINGFIRE;
-    FlightElement* set_extinguishing_fire = new SendMessage((DataMessage*)&ugv_ExtinguishingFire);
+    FlightElement* ugv_set_extinguishing_fire = new SendMessage((DataMessage*)&ugv_ExtinguishingFire);
     IntegerMsg ugv_ReturningToBase;
     ugv_ReturningToBase.data = (int)UGVNavState::RETURNINGTOBASE;
-    FlightElement* set_returning_to_base = new SendMessage((DataMessage*)&ugv_ReturningToBase);
-    //                //
-
+    FlightElement* ugv_set_returning_to_base = new SendMessage((DataMessage*)&ugv_ReturningToBase);
+    ////////////////////
 
     InternalSystemStateCondition* error_condition = new InternalSystemStateCondition(GFMMState::ERROR);
     WaitForCondition* error_check = new WaitForCondition((Condition*)error_condition);
@@ -116,7 +112,7 @@ int main(int argc, char** argv) {
     ExternalSystemStateCondition* FireDetection_Idle = new ExternalSystemStateCondition((int)FireDetectionState::IDLE);
     WaitForCondition* fire_detection_idle_check = new WaitForCondition((Condition*)FireDetection_Idle);
 
-    ExternalSystemStateCondition* FireDetection_ScanningWithLocated = new ExternalSystemStateCondition((int)FireDetectionState::IDLE);
+    ExternalSystemStateCondition* FireDetection_ScanningWithLocated = new ExternalSystemStateCondition((int)FireDetectionState::SCANNING_WITH_FIRE_LOCATED);
     WaitForCondition* fire_detection_scanning_with_located_check = new WaitForCondition((Condition*)FireDetection_ScanningWithLocated);
 
     ExternalSystemStateCondition* WaterExt_Unarmed = new ExternalSystemStateCondition((int)WaterFireExtState::Unarmed);
@@ -137,7 +133,7 @@ int main(int argc, char** argv) {
     ExternalSystemStateCondition* UGVNav_SearchingForFire = new ExternalSystemStateCondition((int)UGVNavState::SEARCHINGFORFIRE);
     WaitForCondition* ugv_nav_searching_for_fire_check = new WaitForCondition((Condition*)UGVNav_SearchingForFire);
 
-    ExternalSystemStateCondition* UGVNav_HeadingTowardsFire = new ExternalSystemStateCondition((int)UGVNavState::SEARCHINGFORFIRE);
+    ExternalSystemStateCondition* UGVNav_HeadingTowardsFire = new ExternalSystemStateCondition((int)UGVNavState::HEADINGTOWARDSFIRE);
     WaitForCondition* ugv_nav_heading_towards_fire_check = new WaitForCondition((Condition*)UGVNav_HeadingTowardsFire);
 
     ExternalSystemStateCondition* UGVNav_AlignedWithFire = new ExternalSystemStateCondition((int)UGVNavState::UGVALIGNEDWITHTARGET);
@@ -174,16 +170,16 @@ int main(int argc, char** argv) {
     UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_AlignedWithFire);
     UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_ReachedBase);
 
-    set_scanning_with_no_detection->add_callback_msg_receiver((msg_receiver*) FireDetectionStateUpdaterClnt);
+    detection_set_scanning_with_no_detection->add_callback_msg_receiver((msg_receiver*) FireDetectionStateUpdaterClnt);
 
-    set_armed_idle->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
-    set_unarmed_state->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
-    set_idle_state->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
-    upload_water_level->add_callback_msg_receiver((msg_receiver*) WateLevelUpdateRequesterClnt);
+    ext_set_armed_idle->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
+    ext_set_unarmed_state->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
+    ext_set_idle_state->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
+    ext_upload_water_level->add_callback_msg_receiver((msg_receiver*) WateLevelUpdateRequesterClnt);
 
-    set_heading_towards_entrance->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
-    set_extinguishing_fire->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
-    set_returning_to_base->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
+    ugv_set_heading_towards_entrance->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
+    ugv_set_extinguishing_fire->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
+    ugv_set_returning_to_base->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
 
     // ********************************************************************************
     // ********************************** PIPELINES ***********************************
@@ -193,19 +189,19 @@ int main(int argc, char** argv) {
 
     // TODO: add error check
 
-    not_ready_pipeline.addElement((FlightElement*)not_ready_check);
-    not_ready_pipeline.addElement((FlightElement*)fire_detection_idle_check);
-    not_ready_pipeline.addElement((FlightElement*)water_ext_armed_idle_check);
-    not_ready_pipeline.addElement((FlightElement*)ugv_nav_idle_check);
-    not_ready_pipeline.addElement((FlightElement*)cs_to_ready_to_start);
+    // not_ready_pipeline.addElement((FlightElement*)not_ready_check);
+    // not_ready_pipeline.addElement((FlightElement*)fire_detection_idle_check);
+    // not_ready_pipeline.addElement((FlightElement*)water_ext_unarmed_check);
+    // not_ready_pipeline.addElement((FlightElement*)ugv_nav_idle_check);
+    // not_ready_pipeline.addElement((FlightElement*)cs_to_ready_to_start);
     
     ready_to_start_pipeline.addElement((FlightElement*)ready_to_start_check);
-    ready_to_start_pipeline.addElement((FlightElement*)set_heading_towards_entrance);
+    ready_to_start_pipeline.addElement((FlightElement*)ugv_set_heading_towards_entrance);
     ready_to_start_pipeline.addElement((FlightElement*)cs_to_heading_toward_entrance);
     
     heading_towards_entrance_pipeline.addElement((FlightElement*)heading_towards_entrance_check);
     heading_towards_entrance_pipeline.addElement((FlightElement*)ugv_nav_searching_for_fire_check);
-    heading_towards_entrance_pipeline.addElement((FlightElement*)set_scanning_with_no_detection);
+    heading_towards_entrance_pipeline.addElement((FlightElement*)detection_set_scanning_with_no_detection);
     heading_towards_entrance_pipeline.addElement((FlightElement*)cs_to_searching_for_fire);
 
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
@@ -215,17 +211,19 @@ int main(int argc, char** argv) {
 
     approaching_fire_pipeline.addElement((FlightElement*)approaching_fire_check);
     approaching_fire_pipeline.addElement((FlightElement*)ugv_nav_aligned_with_fire_check);
-    approaching_fire_pipeline.addElement((FlightElement*)set_armed_idle);
-    approaching_fire_pipeline.addElement((FlightElement*)set_extinguishing_fire);
+    approaching_fire_pipeline.addElement((FlightElement*)ext_set_armed_idle);
+    approaching_fire_pipeline.addElement((FlightElement*)ugv_set_extinguishing_fire);
     approaching_fire_pipeline.addElement((FlightElement*)cs_to_extinguishing_fire);
 
     extinguishing_fire_pipeline.addElement((FlightElement*)extinguishing_fire_check);
     extinguishing_fire_pipeline.addElement((FlightElement*)water_ext_armed_extinguished_check);
-    extinguishing_fire_pipeline.addElement((FlightElement*)set_returning_to_base);
+    extinguishing_fire_pipeline.addElement((FlightElement*)ext_set_unarmed_state);
+    extinguishing_fire_pipeline.addElement((FlightElement*)ugv_set_returning_to_base);
     extinguishing_fire_pipeline.addElement((FlightElement*)cs_to_return_to_base);
 
     return_to_base_pipeline.addElement((FlightElement*) return_to_base_check);
     return_to_base_pipeline.addElement((FlightElement*) ugv_nav_reached_base_check);
+    return_to_base_pipeline.addElement((FlightElement*) ext_set_idle_state);
     return_to_base_pipeline.addElement((FlightElement*) cs_to_finished);
 
     //TODO: ask about finish pipeline

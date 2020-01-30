@@ -9,7 +9,6 @@ SendMessage::~SendMessage() {
 }
 
 void SendMessage::perform(){
-    std::cout << "SENDING MESSAGE" << std::endl;
     this->emit_message(m_output_msg);
 }
 

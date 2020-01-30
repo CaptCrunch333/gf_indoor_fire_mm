@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+<group ns="Test_GF">
+
+  <node name="GF_Indoor_Fire_MM" pkg="gf_indoor_fire_mm" type="gf_indoor_fire_mm_node" output="screen"/>
+
+  <node name="UGV_Navigation_And_Control" pkg="ugv_nav" type="ugv_nav_node" output="screen"/>
+
+</group>
+
+</launch>
+

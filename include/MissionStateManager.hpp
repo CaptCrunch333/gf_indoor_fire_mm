@@ -6,11 +6,13 @@
 #include "WaterFireExtState.hpp"
 #include "GFIndoorFireDetectionStates.hpp"
 #include "IntegerMsg.hpp"
+#include "logger.hpp"
 
 class MissionStateManager : public msg_emitter
 {
     private:
-        GFMMState current_external_wall_fire_state;
+        GFMMState current_state;
+        void displayStateChange();
     public:
         void updateMissionState(GFMMState);
         GFMMState getMissionState();
