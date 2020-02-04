@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
     FlightElement* ugv_set_patroling_area_ccw = new SendMessage((DataMessage*)&ugv_PatrolingAreaCCW);
 
     IntegerMsg ugv_HeadingTowardsFire;
-    ugv_HeadingTowardsFire.data = (int)UGVNavState::HEADINGTOWARDSENTRANCE;
+    ugv_HeadingTowardsFire.data = (int)UGVNavState::HEADINGTOWARDSFIRE;
     FlightElement* ugv_set_heading_towards_fire = new SendMessage((DataMessage*)&ugv_HeadingTowardsFire);
     IntegerMsg ugv_ExtinguishingFire;
     ugv_ExtinguishingFire.data = (int)UGVNavState::EXTINGUISHINGFIRE;
@@ -272,6 +272,7 @@ int main(int argc, char** argv) {
     main_scenario.AddFlightPipeline(&ready_to_start_pipeline);
     main_scenario.AddFlightPipeline(&heading_towards_entrance_pipeline);
     main_scenario.AddFlightPipeline(&searching_for_fire_pipeline);
+    main_scenario.AddFlightPipeline(&fire_detected_pipeline);
     main_scenario.AddFlightPipeline(&approaching_fire_pipeline);
     main_scenario.AddFlightPipeline(&extinguishing_fire_pipeline);
     main_scenario.AddFlightPipeline(&return_to_base_pipeline);
