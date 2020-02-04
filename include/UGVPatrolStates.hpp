@@ -1,3 +1,3 @@
 #pragma once
 
-enum class UGVPatrolState {IDLE = 0, PATROLINGCCW = 1, PATROLINGCW = 2};
+enum class UGVPatrolState {IDLE = 0, HEADINGTOWARDSFIREDIRECTION = 1, PATROLINGCCW = 2, PATROLINGCW = 3};

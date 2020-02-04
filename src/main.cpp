@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 	ROSUnit* WaterExtStateUpdaterClnt = mainROSUnit_Factory_main.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "water_ext/set_mission_state");
     ROSUnit* WateLevelUpdateRequesterClnt = mainROSUnit_Factory_main.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "water_ext/get_water_level"); 
     ROSUnit* UGVNavCtrlUpdaterClnt = mainROSUnit_Factory_main.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "ugv_nav/set_mission_state");
-    ROSUnit* UGVPatrolUpdaterClnt = mainROSUnit_Factory_main.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "ugv_nav/set_patrol_state");
+    ROSUnit* UGVPatrolUpdaterClnt = mainROSUnit_Factory_main.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "ugv_nav/set_patrol_mode");
     // ********************************************************************************
     // ******************************* FLIGHT ELEMENTS ********************************
     //Internal States //
@@ -73,6 +73,10 @@ int main(int argc, char** argv) {
     IntegerMsg ugv_HeadingTowardsEntrance;
     ugv_HeadingTowardsEntrance.data = (int)UGVNavState::HEADINGTOWARDSENTRANCE;
     FlightElement* ugv_set_heading_towards_entrance = new SendMessage((DataMessage*)&ugv_HeadingTowardsEntrance);
+
+    IntegerMsg ugv_HeadingTowardsFireDirection;
+    ugv_HeadingTowardsFireDirection.data = (int)UGVPatrolState::HEADINGTOWARDSFIREDIRECTION;
+    FlightElement* ugv_set_heading_towards_fire_direction = new SendMessage((DataMessage*)&ugv_HeadingTowardsFireDirection);
 
     IntegerMsg ugv_PatrolingAreaCCW;
     ugv_PatrolingAreaCCW.data = (int)UGVPatrolState::PATROLINGCCW;
@@ -163,7 +167,6 @@ int main(int argc, char** argv) {
 
     // ********************************************************************************
     // ****************************** SYSTEM CONNECTIONS ******************************
-
     InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_error);
     InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_not_ready);
     InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_ready_to_start);
@@ -204,7 +207,7 @@ int main(int argc, char** argv) {
     ugv_set_extinguishing_fire->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
     ugv_set_returning_to_base->add_callback_msg_receiver((msg_receiver*) UGVNavCtrlUpdaterClnt);
     ugv_set_patroling_area_ccw->add_callback_msg_receiver((msg_receiver*) UGVPatrolUpdaterClnt);
-
+    ugv_set_heading_towards_fire_direction->add_callback_msg_receiver((msg_receiver*) UGVPatrolUpdaterClnt);
     // ********************************************************************************
     // ********************************** PIPELINES ***********************************
     FlightPipeline not_ready_pipeline, ready_to_start_pipeline, heading_towards_entrance_pipeline,
@@ -230,6 +233,7 @@ int main(int argc, char** argv) {
 
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     searching_for_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_detected_check);
+    searching_for_fire_pipeline.addElement((FlightElement*)ugv_set_heading_towards_fire_direction);
     //searching_for_fire_pipeline.addElement((FlightElement*)ugv_set_patroling_area_ccw);
     searching_for_fire_pipeline.addElement((FlightElement*)cs_to_fire_detected);
 
