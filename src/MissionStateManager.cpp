@@ -41,6 +41,10 @@ void MissionStateManager::displayStateChange()
         Logger::getAssignedLogger()->log("GF MM State Changed To Approaching Fire", LoggerLevel::Info);
         break;
     }
+    case GFMMState::POSITIONING_UGV: {
+        Logger::getAssignedLogger()->log("GF MM State Changed To Extinguishing Fire", LoggerLevel::Info);
+        break;
+    }
     case GFMMState::EXTINGUISHING_FIRE: {
         Logger::getAssignedLogger()->log("GF MM State Changed To Extinguishing Fire", LoggerLevel::Info);
         break;
