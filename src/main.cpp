@@ -234,8 +234,8 @@ int main(int argc, char** argv) {
                    positioning_ugv_success_pipepline, positioning_ugv_failure_pipeline,extinguishing_fire_pipeline, 
                    return_to_base_pipeline, error_pipeline;// finished_pipeline;
     //This pipeline will be added everytime the failure state occurs (resets it, kinda!!!)
-    AddPipeline add_positioning_ugv_failure_pipeline(&positioning_ugv_failure_pipeline, &main_scenario);
-    AddPipeline add_approaching_fire_pipeline(&approaching_fire_pipeline, &main_scenario);
+    FlightElement* add_positioning_ugv_failure_pipeline = new AddPipeline(&positioning_ugv_failure_pipeline, &main_scenario);
+    FlightElement* add_approaching_fire_pipeline = new AddPipeline(&approaching_fire_pipeline, &main_scenario);
     // TODO: add error check
 
     // not_ready_pipeline.addElement((FlightElement*)not_ready_check);
