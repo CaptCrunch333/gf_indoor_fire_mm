@@ -60,9 +60,8 @@ int main(int argc, char** argv) {
     FlightElement* detection_set_scanning_with_no_detection = new SendMessage((DataMessage*)&detection_ScanningWithNoDetection);
     EmptyMsg detection_VisualScan;
     FlightElement* detection_set_start_visual_scan = new SendMessage((DataMessage*)&detection_VisualScan);
-
     Wait* detection_visual_scanning_wait = new Wait;
-    detection_visual_scanning_wait->wait_time_ms = 1000;
+    detection_visual_scanning_wait->wait_time_ms = 30000;
 
     //Water Extinguishing States
     IntegerMsg ext_Idle; //resets water level
@@ -104,6 +103,11 @@ int main(int argc, char** argv) {
 
     Wait* ugv_position_adjust_wait = new Wait;
     ugv_position_adjust_wait->wait_time_ms = 1000;
+
+    ////////////////////
+
+    Wait* ros_comm_wait = new Wait;
+    ros_comm_wait->wait_time_ms = 1000;
 
     ////////////////////
 
@@ -218,6 +222,7 @@ int main(int argc, char** argv) {
     UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_ReachedBase);
 
     detection_set_scanning_with_no_detection->add_callback_msg_receiver((msg_receiver*) FireDetectionStateUpdaterClnt);
+    detection_set_start_visual_scan->add_callback_msg_receiver((msg_receiver*)FireDetectionVisualScanClnt);
 
     ext_set_unarmed_state->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
     ext_start_thermal_scan->add_callback_msg_receiver((msg_receiver*) WaterExtThermalScanClnt);
@@ -236,13 +241,14 @@ int main(int argc, char** argv) {
     // ********************************** PIPELINES ***********************************
     FlightScenario main_scenario;
     FlightPipeline not_ready_pipeline, ready_to_start_pipeline, heading_towards_entrance_pipeline,
-                   searching_for_fire_pipeline, fire_detected_pipeline, fire_located_pipeline, approaching_fire_pipeline, 
-                   positioning_ugv_success_pipepline, positioning_ugv_failure_pipeline,extinguishing_fire_pipeline, 
-                   return_to_base_pipeline, error_pipeline;// finished_pipeline;
-    //This pipeline will be added everytime the failure state occurs (resets it, kinda!!!)
+                   searching_for_fire_pipeline, detecting_fire_pipeline, fire_detected_pipeline, locating_fire_pipeline, 
+                   fire_located_pipeline, approaching_fire_pipeline, positioning_ugv_success_pipepline,
+                   positioning_ugv_failure_pipeline,extinguishing_fire_pipeline, return_to_base_pipeline, error_pipeline;// finished_pipeline;
+    
+    FlightElement* add_searching_fire_pipeline = new AddPipeline(&searching_for_fire_pipeline, &main_scenario);
+    FlightElement* add_fire_detected_pipeline = new AddPipeline(&fire_detected_pipeline, &main_scenario);
     FlightElement* add_positioning_ugv_failure_pipeline = new AddPipeline(&positioning_ugv_failure_pipeline, &main_scenario);
     FlightElement* add_approaching_fire_pipeline = new AddPipeline(&approaching_fire_pipeline, &main_scenario);
-    FlightElement* add_searching_fire_pipeline = new AddPipeline(&searching_for_fire_pipeline, &main_scenario);
     
     // TODO: add error check
 
@@ -263,25 +269,35 @@ int main(int argc, char** argv) {
 
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     searching_for_fire_pipeline.addElement((FlightElement*)ugv_set_position_adjustment);
+    searching_for_fire_pipeline.addElement((FlightElement*)ros_comm_wait);
     searching_for_fire_pipeline.addElement((FlightElement*)ugv_nav_searching_for_fire_check);
     searching_for_fire_pipeline.addElement((FlightElement*)detection_set_start_visual_scan);
     searching_for_fire_pipeline.addElement((FlightElement*)detection_visual_scanning_wait);
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     searching_for_fire_pipeline.addElement((FlightElement*)add_searching_fire_pipeline);
 
-    
+    detecting_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
+    detecting_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_detected_check);
+    detecting_fire_pipeline.addElement((FlightElement*)cs_to_fire_detected);
 
-    // fire_detected_pipeline.addElement((FlightElement*)fire_detected_check);
-    // fire_detected_pipeline.addElement((FlightElement*)fire_detection_scanning_with_located_check);
-    // fire_detected_pipeline.addElement((FlightElement*)ugv_set_heading_towards_fire);
-    // fire_detected_pipeline.addElement((FlightElement*)cs_to_approaching_fire);
+    fire_detected_pipeline.addElement((FlightElement*)fire_detected_check);
+    fire_detected_pipeline.addElement((FlightElement*)ugv_set_position_adjustment);
+    fire_detected_pipeline.addElement((FlightElement*)ros_comm_wait);
+    fire_detected_pipeline.addElement((FlightElement*)ugv_nav_searching_for_fire_check);
+    fire_detected_pipeline.addElement((FlightElement*)fire_detected_check);
+    fire_detected_pipeline.addElement((FlightElement*)add_fire_detected_pipeline);
+
+    locating_fire_pipeline.addElement((FlightElement*)fire_detected_check);
+    locating_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_located_check);
+    locating_fire_pipeline.addElement((FlightElement*)ugv_set_heading_towards_fire);
+    locating_fire_pipeline.addElement((FlightElement*)cs_to_approaching_fire);
 
     approaching_fire_pipeline.addElement((FlightElement*)approaching_fire_check);
-    //approaching_fire_pipeline.addElement((FlightElement*)ugv_nav_aligned_with_fire_check); // Add a pipeline to adjust positioning of ugv to hit fire, this should adjust to the functionality of the water_ext and ugv nav 
-    //approaching_fire_pipeline.addElement((FlightElement*)ext_set_armed_idle);
-
+    approaching_fire_pipeline.addElement((FlightElement*)ugv_nav_aligned_with_fire_check); // Add a pipeline to adjust positioning of ugv to hit fire, this should adjust to the functionality of the water_ext and ugv nav 
+    approaching_fire_pipeline.addElement((FlightElement*)ext_set_armed_idle);
     approaching_fire_pipeline.addElement((FlightElement*)ugv_set_extinguishing_fire);
     approaching_fire_pipeline.addElement((FlightElement*)cs_to_extinguishing_fire);
+
     // approaching_fire_pipeline.addElement((FlightElement*)add_positioning_ugv_failure_pipeline);
     // approaching_fire_pipeline.addElement((FlightElement*)ext_set_scanning);
     // approaching_fire_pipeline.addElement((FlightElement*)cs_to_positioning_ugv);
@@ -300,15 +316,15 @@ int main(int argc, char** argv) {
     // positioning_ugv_success_pipepline.addElement((FlightElement*)cs_to_extinguishing_fire);
 
     extinguishing_fire_pipeline.addElement((FlightElement*)extinguishing_fire_check);
-    //extinguishing_fire_pipeline.addElement((FlightElement*)water_ext_out_of_water_check);
-    // extinguishing_fire_pipeline.addElement((FlightElement*)water_ext_armed_extinguished_check);
+    extinguishing_fire_pipeline.addElement((FlightElement*)water_ext_out_of_water_check);
+    //extinguishing_fire_pipeline.addElement((FlightElement*)water_ext_armed_extinguished_check);
     //extinguishing_fire_pipeline.addElement((FlightElement*)ext_set_unarmed_state);
     extinguishing_fire_pipeline.addElement((FlightElement*)ugv_set_returning_to_base);
     extinguishing_fire_pipeline.addElement((FlightElement*)cs_to_return_to_base);
 
     return_to_base_pipeline.addElement((FlightElement*) return_to_base_check);
     return_to_base_pipeline.addElement((FlightElement*) ugv_nav_reached_base_check);
-    return_to_base_pipeline.addElement((FlightElement*) ext_set_idle_state);
+    //return_to_base_pipeline.addElement((FlightElement*) ext_set_idle_state);
     return_to_base_pipeline.addElement((FlightElement*) cs_to_finished);
 
     //TODO: ask about finish pipeline
@@ -316,7 +332,9 @@ int main(int argc, char** argv) {
     main_scenario.AddFlightPipeline(&ready_to_start_pipeline);
     main_scenario.AddFlightPipeline(&heading_towards_entrance_pipeline);
     main_scenario.AddFlightPipeline(&searching_for_fire_pipeline);
+    main_scenario.AddFlightPipeline(&detecting_fire_pipeline);
     main_scenario.AddFlightPipeline(&fire_detected_pipeline);
+    main_scenario.AddFlightPipeline(&locating_fire_pipeline);
     main_scenario.AddFlightPipeline(&approaching_fire_pipeline);
     main_scenario.AddFlightPipeline(&extinguishing_fire_pipeline);
     main_scenario.AddFlightPipeline(&return_to_base_pipeline);
