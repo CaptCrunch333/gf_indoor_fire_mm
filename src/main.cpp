@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
     UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_AlignedWithFire);
     UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_ReachedBase);
 
-    detection_cs_fire_detection_scanning_with_no_detection->add_callback_msg_receiver((msg_receiver*) FireDetectionStateUpdaterClnt);
+    cs_fire_detection_scanning_with_no_detection->add_callback_msg_receiver((msg_receiver*) FireDetectionStateUpdaterClnt);
     cs_fire_detection_start_visual_scan->add_callback_msg_receiver((msg_receiver*)FireDetectionVisualScanClnt);
 
     cs_water_ext_unarmed_state->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
