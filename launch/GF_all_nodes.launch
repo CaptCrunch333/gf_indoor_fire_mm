@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+	
+  <node name="GF_Indoor_Fire_MM" pkg="gf_indoor_fire_mm" type="gf_indoor_fire_mm_node" output="screen"/>
+
+  <node name="UGV_Navigation_And_Control" pkg="ugv_nav" type="ugv_nav_node" output="screen"/>
+
+  <node pkg="ugv_fire_localizer" type="ugv_fire_localizer" name="ugv_fire_localizer" output="screen">
+  </node>
+
+
+</launch>
