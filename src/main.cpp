@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     EmptyMsg detection_VisualScan;
     FlightElement* cs_fire_detection_start_visual_scan = new SendMessage((DataMessage*)&detection_VisualScan);
     Wait* detection_visual_scanning_wait = new Wait;
-    detection_visual_scanning_wait->wait_time_ms = 30000;
+    detection_visual_scanning_wait->wait_time_ms = 40000;
 
     //Water Extinguishing States
     IntegerMsg ext_Idle; //resets water level
@@ -268,13 +268,14 @@ int main(int argc, char** argv) {
     heading_towards_entrance_pipeline.addElement((FlightElement*)cs_to_searching_for_fire);
 
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
+    searching_for_fire_pipeline.addElement((FlightElement*)cs_fire_detection_start_visual_scan);
+    searching_for_fire_pipeline.addElement((FlightElement*)detection_visual_scanning_wait);
+    searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     searching_for_fire_pipeline.addElement((FlightElement*)cmd_ugv_nav_position_adjustment);
     //TODO: CHANGE UGV NAV SUBSYSTEM STATES TO BE RESTRICTED (MOVE, REACHEDGOAL)
     //searching_for_fire_pipeline.addElement((FlightElement*)ros_comm_wait);
     searching_for_fire_pipeline.addElement((FlightElement*)ugv_nav_searching_for_fire_check);
-    searching_for_fire_pipeline.addElement((FlightElement*)cs_fire_detection_start_visual_scan);
-    searching_for_fire_pipeline.addElement((FlightElement*)detection_visual_scanning_wait);
-    searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
+    //searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     searching_for_fire_pipeline.addElement((FlightElement*)add_searching_fire_pipeline);
 
     detecting_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
