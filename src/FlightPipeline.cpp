@@ -13,11 +13,19 @@ void FlightPipeline::addElement(FlightElement* t_element){
 }
 
 void FlightPipeline::execute(){
-    std::list<FlightElement*>::iterator it;
-    for (it = _list_of_elements.begin(); it != _list_of_elements.end(); ++it){
-        (*it)->perform();
+    //std::list<FlightElement*>::iterator it;
+    // for (it = _list_of_elements.begin(); it != _list_of_elements.end(); ++it){
+    //     (*it)->perform();
+    // }
+    // this->print_done_msg();
+    for (m_it = _list_of_elements.begin(); m_it != _list_of_elements.end(); ++m_it){
+        (*m_it)->perform();
     }
     this->print_done_msg();
+}
+
+void FlightPipeline::reset_pipeline() {
+    m_it = _list_of_elements.begin();
 }
 
 void FlightPipeline::set_msg(std::string t_msg) {

@@ -5,6 +5,7 @@
 #include "Wait.hpp"
 #include "WaitForCondition.hpp"
 #include "AddPipeline.hpp"
+#include "ResetPipeline.hpp"
 #include "InternalSystemStateCondition.hpp"
 #include "ChangeInternalState.hpp"
 #include "ExternalSystemStateCondition.hpp"
@@ -315,14 +316,14 @@ int main(int argc, char** argv) {
     return_to_base_pipeline.set_msg("return_to_base_pipeline");
     error_pipeline.set_msg("error_pipeline");
 
-    FlightElement* add_searching_fire_pipeline = new AddPipeline(&searching_for_fire_pipeline, &main_scenario);
-    add_searching_fire_pipeline->set_perform_msg("add_searching_fire_pipeline added");
-    FlightElement* add_fire_detected_pipeline = new AddPipeline(&fire_detected_pipeline, &main_scenario);
-    add_fire_detected_pipeline->set_perform_msg("add_fire_detected_pipeline added");
-    FlightElement* add_positioning_ugv_failure_pipeline = new AddPipeline(&positioning_ugv_failure_pipeline, &main_scenario);
-    add_positioning_ugv_failure_pipeline->set_perform_msg("add_positioning_ugv_failure_pipeline added");
-    FlightElement* add_approaching_fire_pipeline = new AddPipeline(&approaching_fire_pipeline, &main_scenario);
-    add_approaching_fire_pipeline->set_perform_msg("add_approaching_fire_pipeline added");
+    FlightElement* reset_searching_fire_pipeline = new ResetPipeline(&searching_for_fire_pipeline);
+    reset_searching_fire_pipeline->set_perform_msg("searching_for_fire_pipeline reset");
+    FlightElement* reset_fire_detected_pipeline = new ResetPipeline(&fire_detected_pipeline);
+    reset_fire_detected_pipeline->set_perform_msg("fire_detected_pipeline reset");
+    FlightElement* reset_positioning_ugv_failure_pipeline = new ResetPipeline(&positioning_ugv_failure_pipeline);
+    reset_positioning_ugv_failure_pipeline->set_perform_msg("positioning_ugv_failure_pipeline reset");
+    FlightElement* reset_approaching_fire_pipeline = new ResetPipeline(&approaching_fire_pipeline);
+    reset_approaching_fire_pipeline->set_perform_msg("approaching_fire_pipeline reset");
 
     // TODO: add error check
 
@@ -350,7 +351,7 @@ int main(int argc, char** argv) {
     //searching_for_fire_pipeline.addElement((FlightElement*)ros_comm_wait);
     searching_for_fire_pipeline.addElement((FlightElement*)ugv_nav_searching_for_fire_check);
     //searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
-    searching_for_fire_pipeline.addElement((FlightElement*)add_searching_fire_pipeline);
+    searching_for_fire_pipeline.addElement((FlightElement*)reset_searching_fire_pipeline);
 
     detecting_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     detecting_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_detected_check);
@@ -362,7 +363,7 @@ int main(int argc, char** argv) {
     fire_detected_pipeline.addElement((FlightElement*)ugv_nav_searching_for_fire_check);
     //TODO: REMOVE IMPLICIT FIRE CHASING AND HANDLE DEFLECTION POINT
     fire_detected_pipeline.addElement((FlightElement*)fire_detected_check);
-    fire_detected_pipeline.addElement((FlightElement*)add_fire_detected_pipeline);
+    fire_detected_pipeline.addElement((FlightElement*)reset_fire_detected_pipeline);
 
     locating_fire_pipeline.addElement((FlightElement*)fire_detected_check);
     locating_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_located_check);

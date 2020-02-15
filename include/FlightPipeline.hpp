@@ -6,6 +6,7 @@
 class FlightPipeline {
 
 private:
+    std::list<FlightElement*>::iterator m_it;
     std::list<FlightElement*> _list_of_elements;
     std::string m_name_msg = "Pipeline";
 
@@ -14,6 +15,7 @@ public:
     void addElement(FlightElement*);
     void set_msg(std::string);
     void execute();
+    void reset_pipeline();
     void print_add_msg();
     void print_done_msg();
 
