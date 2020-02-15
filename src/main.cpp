@@ -1,5 +1,6 @@
 #include "logger.hpp"
 #include "std_logger.hpp"
+#include "ros_logger.hpp"
 #include "FlightElement.hpp"
 #include "Wait.hpp"
 #include "WaitForCondition.hpp"
@@ -16,7 +17,7 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "gf_indoor_fire_mm");
     ros::NodeHandle nh;
     // ************************************ LOGGER ************************************
-    Logger::assignLogger(new StdLogger());
+    Logger::assignLogger(new RosLogger;
     Logger::getAssignedLogger()->log("start of logger", LoggerLevel::Info);
     //Logger::getAssignedLogger()->enableFileLog(LoggerLevel::Error);
     // ********************************************************************************
