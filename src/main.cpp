@@ -353,19 +353,20 @@ int main(int argc, char** argv) {
     //searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     searching_for_fire_pipeline.addElement((FlightElement*)reset_searching_fire_pipeline);
 
-    detecting_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
-    detecting_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_detected_check);
-    detecting_fire_pipeline.addElement((FlightElement*)cs_to_fire_detected);
+    // detecting_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
+    // detecting_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_detected_check);
+    // detecting_fire_pipeline.addElement((FlightElement*)cs_to_fire_detected);
 
-    fire_detected_pipeline.addElement((FlightElement*)fire_detected_check);
-    fire_detected_pipeline.addElement((FlightElement*)cmd_ugv_nav_position_adjustment);
-    //fire_detected_pipeline.addElement((FlightElement*)ros_comm_wait);
-    fire_detected_pipeline.addElement((FlightElement*)ugv_nav_searching_for_fire_check);
-    //TODO: REMOVE IMPLICIT FIRE CHASING AND HANDLE DEFLECTION POINT
-    fire_detected_pipeline.addElement((FlightElement*)fire_detected_check);
-    fire_detected_pipeline.addElement((FlightElement*)reset_fire_detected_pipeline);
+    // fire_detected_pipeline.addElement((FlightElement*)fire_detected_check);
+    // fire_detected_pipeline.addElement((FlightElement*)cmd_ugv_nav_position_adjustment);
+    // //fire_detected_pipeline.addElement((FlightElement*)ros_comm_wait);
+    // fire_detected_pipeline.addElement((FlightElement*)ugv_nav_searching_for_fire_check);
+    // //TODO: REMOVE IMPLICIT FIRE CHASING AND HANDLE DEFLECTION POINT
+    // fire_detected_pipeline.addElement((FlightElement*)fire_detected_check);
+    // fire_detected_pipeline.addElement((FlightElement*)reset_fire_detected_pipeline);
 
-    locating_fire_pipeline.addElement((FlightElement*)fire_detected_check);
+    //locating_fire_pipeline.addElement((FlightElement*)fire_detected_check);
+    locating_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     locating_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_located_check);
     locating_fire_pipeline.addElement((FlightElement*)cs_ugv_nav_heading_towards_fire);
     locating_fire_pipeline.addElement((FlightElement*)cs_to_approaching_fire);
