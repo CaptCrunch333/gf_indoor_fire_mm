@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
     ROSUnit* UGVPatrolUpdaterClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "ugv_nav/set_patrol_mode");
     ROSUnit* UGVPositionAdjustmentClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Float, "ugv_nav/set_position_adjustment"); // TODO: add to IF
     ROSUnit* UGVChangePoseClnt = mainROSFactory->CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Pose, "ugv_nav/move_to_goal");
+    ROSUnit* UGVGoToFireLocationClnt = mainROSUnit_Factory->CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Empty, "ugv_nav/go_to_fire_location");
     // ********************************************************************************
     // ******************************* FLIGHT ELEMENTS ********************************
     //Internal States //
@@ -123,6 +124,9 @@ int main(int argc, char** argv) {
     ugv_GoToEntrance.pose.yaw = 0;
     FlightElement* cmd_ugv_nav_go_to_entrance = new SendMessage((DataMessage*)&ugv_GoToEntrance);
     cmd_ugv_nav_go_to_entrance->set_perform_msg("cmd_ugv_nav_go_to_entrance completed");
+    EmptyMsg* ugv_GoToFireLocation;
+    FlightElement cmd_ugv_nav_go_to_fire_location = new SendMessage((DataMessage*)&ugv_GoToFireLocation);
+    cmd_ugv_nav_go_to_fire_location->set_perform_msg("cmd_ugv_nav_go_to_fire_location completed");
 
     Wait* ugv_position_adjust_wait = new Wait;
     ugv_position_adjust_wait->set_perform_msg("ugv_position_adjust_wait in progress");
@@ -275,6 +279,7 @@ int main(int argc, char** argv) {
     cmd_ugv_nav_position_adjustment->add_callback_msg_receiver((msg_receiver*) UGVPositionAdjustmentClnt);
     cmd_ugv_nav_go_to_entrance->add_callback_msg_receiver((msg_receiver*) UGVChangePoseClnt);
     cmd_ugv_nav_move_to_base->add_callback_msg_receiver((msg_receiver*) UGVChangePoseClnt);
+    cmd_ugv_nav_go_to_fire_location->add_callback_msg_receiver((msg_receiver*) UGVGoToFireLocationClnt);
     // ********************************************************************************
     // ********************************** PIPELINES ***********************************
     FlightScenario main_scenario;
@@ -329,43 +334,29 @@ int main(int argc, char** argv) {
     searching_for_fire_pipeline.addElement((FlightElement*)detection_visual_scanning_wait);
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     searching_for_fire_pipeline.addElement((FlightElement*)cmd_ugv_nav_position_adjustment);
-    //searching_for_fire_pipeline.addElement((FlightElement*)ros_comm_wait);
     searching_for_fire_pipeline.addElement((FlightElement*)ugv_nav_reached_goal_check);
-    //searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     searching_for_fire_pipeline.addElement((FlightElement*)reset_searching_fire_pipeline);
 
-    detecting_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
-    detecting_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_detected_check);
-    detecting_fire_pipeline.addElement((FlightElement*)cs_to_fire_detected);
-
-    fire_detected_pipeline.addElement((FlightElement*)fire_detected_check);
-    fire_detected_pipeline.addElement((FlightElement*)cmd_ugv_nav_position_adjustment);
-    //fire_detected_pipeline.addElement((FlightElement*)ros_comm_wait);
-    fire_detected_pipeline.addElement((FlightElement*)ugv_nav_searching_for_fire_check);
-    //TODO: REMOVE IMPLICIT FIRE CHASING AND HANDLE DEFLECTION POINT
-    fire_detected_pipeline.addElement((FlightElement*)fire_detected_check);
-    fire_detected_pipeline.addElement((FlightElement*)reset_fire_detected_pipeline);
-
-    locating_fire_pipeline.addElement((FlightElement*)fire_detected_check);
+    locating_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     locating_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_located_check);
-    //locating_fire_pipeline.addElement((FlightElement*)cs_ugv_nav_heading_towards_fire);
+    //locating_fire_pipeline.addElement((FlightElement*)ros_comm_wait); //TODO: check comm
+    locating_fire_pipeline.addElement((FlightElement*)cmd_ugv_nav_go_to_fire_location);
     locating_fire_pipeline.addElement((FlightElement*)cs_to_approaching_fire);
 
     approaching_fire_pipeline.addElement((FlightElement*)approaching_fire_check);
-    approaching_fire_pipeline.addElement((FlightElement*)ugv_nav_aligned_with_fire_check); // Add a pipeline to adjust positioning of ugv to hit fire, this should adjust to the functionality of the water_ext and ugv nav 
+    approaching_fire_pipeline.addElement((FlightElement*)ugv_nav_reached_goal_check); // Add a pipeline to adjust positioning of ugv to hit fire, this should adjust to the functionality of the water_ext and ugv nav 
     approaching_fire_pipeline.addElement((FlightElement*)cs_water_ext_armed_idle);
-    //approaching_fire_pipeline.addElement((FlightElement*)cs_ugv_nav_extinguishing_fire);
     approaching_fire_pipeline.addElement((FlightElement*)cs_to_extinguishing_fire);
 
     extinguishing_fire_pipeline.addElement((FlightElement*)extinguishing_fire_check);
     extinguishing_fire_pipeline.addElement((FlightElement*)water_ext_out_of_water_check);
     //extinguishing_fire_pipeline.addElement((FlightElement*)water_ext_armed_extinguished_check);
     //extinguishing_fire_pipeline.addElement((FlightElement*)cs_water_ext_unarmed_state);
-    //extinguishing_fire_pipeline.addElement((FlightElement*)cs_ugv_nav_returning_to_base);
+    extinguishing_fire_pipeline.addElement((FlightElement*)cmd_ugv_nav_move_to_base);
     extinguishing_fire_pipeline.addElement((FlightElement*)cs_to_return_to_base);
 
     return_to_base_pipeline.addElement((FlightElement*) return_to_base_check);
-    return_to_base_pipeline.addElement((FlightElement*) ugv_nav_reached_base_check);
+    return_to_base_pipeline.addElement((FlightElement*) ugv_nav_reached_goal_check);
     //return_to_base_pipeline.addElement((FlightElement*) cs_water_ext_idle_state);
     return_to_base_pipeline.addElement((FlightElement*) cs_to_finished);
 
@@ -374,8 +365,6 @@ int main(int argc, char** argv) {
     main_scenario.AddFlightPipeline(&ready_to_start_pipeline);
     main_scenario.AddFlightPipeline(&heading_towards_entrance_pipeline);
     main_scenario.AddFlightPipeline(&searching_for_fire_pipeline);
-    main_scenario.AddFlightPipeline(&detecting_fire_pipeline);
-    main_scenario.AddFlightPipeline(&fire_detected_pipeline);
     main_scenario.AddFlightPipeline(&locating_fire_pipeline);
     main_scenario.AddFlightPipeline(&approaching_fire_pipeline);
     main_scenario.AddFlightPipeline(&extinguishing_fire_pipeline);
