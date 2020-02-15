@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     ROSUnit* WaterLevelUpdaterSrv = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Server, ROSUnit_msg_type::ROSUnit_Int, "gf_indoor_fire_mm/update_water_level");
 
     ROSUnit* FireDetectionStateUpdaterClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "gf_indoor_fire_detection/set_state");
-	ROSUnit* FireDetectionVisualScanClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "gf_indoor_fire_detection/sweep_cmd");
+	ROSUnit* FireDetectionVisualScanClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Empty, "gf_indoor_fire_detection/sweep_cmd");
     ROSUnit* WaterExtStateUpdaterClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "water_ext/set_mission_state");
     ROSUnit* WaterExtThermalScanClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Empty, "water_ext/trigger_scan");
     ROSUnit* WateLevelUpdateRequesterClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "water_ext/get_water_level"); 
@@ -72,8 +72,8 @@ int main(int argc, char** argv) {
     FlightElement* cs_fire_detection_scanning_with_no_detection = new SendMessage((DataMessage*)&detection_ScanningWithNoDetection);
     cs_fire_detection_scanning_with_no_detection->set_perform_msg("cs_fire_detection_scanning_with_no_detection completed");
     EmptyMsg detection_VisualScan;
-    FlightElement* cs_fire_detection_start_visual_scan = new SendMessage((DataMessage*)&detection_VisualScan);
-    cs_fire_detection_start_visual_scan->set_perform_msg("cs_fire_detection_start_visual_scan completed");
+    FlightElement* cmd_fire_detection_start_visual_scan = new SendMessage((DataMessage*)&detection_VisualScan);
+    cmd_fire_detection_start_visual_scan->set_perform_msg("cmd_fire_detection_start_visual_scan completed");
     Wait* detection_visual_scanning_wait = new Wait;
     detection_visual_scanning_wait->set_perform_msg("detection_visual_scanning_wait in progress");
     detection_visual_scanning_wait->wait_time_ms = 40000;
@@ -277,7 +277,7 @@ int main(int argc, char** argv) {
     UGVNavCtrlUpdaterSrv->add_callback_msg_receiver((msg_receiver*) UGVNav_ReachedBase);
 
     cs_fire_detection_scanning_with_no_detection->add_callback_msg_receiver((msg_receiver*) FireDetectionStateUpdaterClnt);
-    cs_fire_detection_start_visual_scan->add_callback_msg_receiver((msg_receiver*)FireDetectionVisualScanClnt);
+    cmd_fire_detection_start_visual_scan->add_callback_msg_receiver((msg_receiver*)FireDetectionVisualScanClnt);
 
     cs_water_ext_unarmed_state->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
     cs_water_ext_thermal_scan->add_callback_msg_receiver((msg_receiver*) WaterExtThermalScanClnt);
@@ -342,7 +342,7 @@ int main(int argc, char** argv) {
     heading_towards_entrance_pipeline.addElement((FlightElement*)cs_to_searching_for_fire);
 
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
-    searching_for_fire_pipeline.addElement((FlightElement*)cs_fire_detection_start_visual_scan);
+    searching_for_fire_pipeline.addElement((FlightElement*)cmd_fire_detection_start_visual_scan);
     searching_for_fire_pipeline.addElement((FlightElement*)detection_visual_scanning_wait);
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     searching_for_fire_pipeline.addElement((FlightElement*)cmd_ugv_nav_position_adjustment);
