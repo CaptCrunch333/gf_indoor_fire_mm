@@ -11,6 +11,7 @@ void FlightScenario::AddFlightPipeline(FlightPipeline* t_flight_pipeline){
     pthread_t ptid; 
   
     // Creating a new thread 
+    t_flight_pipeline->print_add_msg();
     pthread_create(&ptid, NULL, &pipelineThreadStarter, (void*)t_flight_pipeline); 
 }
 void FlightScenario::StartScenario(){

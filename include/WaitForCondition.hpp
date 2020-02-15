@@ -5,6 +5,7 @@
 class WaitForCondition : public FlightElement{
 private:
 	Condition* m_wait_condition;
+    bool m_met = false;
 public:
     void perform();
     void receive_msg_data(DataMessage* t_msg);

@@ -10,6 +10,7 @@ SendMessage::~SendMessage() {
 
 void SendMessage::perform(){
     this->emit_message(m_output_msg);
+    this->print_info();
 }
 
 void SendMessage::receive_msg_data(DataMessage*){

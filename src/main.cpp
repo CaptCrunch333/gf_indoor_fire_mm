@@ -42,16 +42,27 @@ int main(int argc, char** argv) {
     // ******************************* FLIGHT ELEMENTS ********************************
     //Internal States //
     FlightElement* cs_to_error = new ChangeInternalState(GFMMState::ERROR);
+    cs_to_error->set_perform_msg("cs_to_error completed");
     FlightElement* cs_to_not_ready = new ChangeInternalState(GFMMState::NOT_READY);
+    cs_to_not_ready->set_perform_msg("cs_to_not_readey completed");
     FlightElement* cs_to_ready_to_start = new ChangeInternalState(GFMMState::READY_TO_START);
+    cs_to_ready_to_start->set_perform_msg("cs_to_ready_to_start completed");
     FlightElement* cs_to_heading_toward_entrance = new ChangeInternalState(GFMMState::HEADING_TOWARD_ENTRANCE);
+    cs_to_heading_toward_entrance->set_perform_msg("cs_to_heading_toward_entrance completed");
     FlightElement* cs_to_searching_for_fire = new ChangeInternalState(GFMMState::SEARCHING_FOR_FIRE);
+    cs_to_searching_for_fire->set_perform_msg("cs_to_searching_for_fire completed");
     FlightElement* cs_to_fire_detected = new ChangeInternalState(GFMMState::FIRE_DETECTED);
+    cs_to_fire_detected->set_perform_msg("cs_to_fire_detected completed");
     FlightElement* cs_to_approaching_fire = new ChangeInternalState(GFMMState::APPROACHING_FIRE);
+    cs_to_approaching_fire->set_perform_msg("cs_to_approaching_fire completed");
     FlightElement* cs_to_positioning_ugv = new ChangeInternalState(GFMMState::POSITIONING_UGV);
+    cs_to_positioning_ugv->set_perform_msg("cs_to_positioning_ugv completed");
     FlightElement* cs_to_extinguishing_fire = new ChangeInternalState(GFMMState::EXTINGUISHING_FIRE);
+    cs_to_extinguishing_fire->set_perform_msg("cs_to_extinguishing_fire completed");
     FlightElement* cs_to_return_to_base = new ChangeInternalState(GFMMState::RETURNING_TO_BASE);
+    cs_to_return_to_base->set_perform_msg("cs_to_return_to_base completed");
     FlightElement* cs_to_finished = new ChangeInternalState(GFMMState::FINISHED);
+    cs_to_finished->set_perform_msg("cs_to_finished completed");
     ////////////////////
 
     //External States //
@@ -59,137 +70,180 @@ int main(int argc, char** argv) {
     IntegerMsg detection_ScanningWithNoDetection;
     detection_ScanningWithNoDetection.data = (int)FireDetectionState::SCANNING_NO_FIRE_DETECTED;
     FlightElement* cs_fire_detection_scanning_with_no_detection = new SendMessage((DataMessage*)&detection_ScanningWithNoDetection);
+    cs_fire_detection_scanning_with_no_detection->set_perform_msg("cs_fire_detection_scanning_with_no_detection completed");
     EmptyMsg detection_VisualScan;
     FlightElement* cs_fire_detection_start_visual_scan = new SendMessage((DataMessage*)&detection_VisualScan);
+    cs_fire_detection_start_visual_scan->set_perform_msg("cs_fire_detection_start_visual_scan completed");
     Wait* detection_visual_scanning_wait = new Wait;
+    detection_visual_scanning_wait->set_perform_msg("detection_visual_scanning_wait in progress");
     detection_visual_scanning_wait->wait_time_ms = 40000;
 
     //Water Extinguishing States
     IntegerMsg ext_Idle; //resets water level
     ext_Idle.data = (int)WaterFireExtState::Idle;
     FlightElement* cs_water_ext_idle_state = new SendMessage((DataMessage*)&ext_Idle);
+    cs_water_ext_idle_state->set_perform_msg("cs_water_ext_idle_state completed");
     IntegerMsg ext_Unarmed;
     ext_Unarmed.data = (int)WaterFireExtState::Unarmed;
     FlightElement* cs_water_ext_unarmed_state = new SendMessage((DataMessage*)&ext_Unarmed);
+    cs_water_ext_unarmed_state->set_perform_msg("cs_water_ext_unarmed_state completed");
     IntegerMsg ext_ArmedIdle;
     ext_ArmedIdle.data = (int)WaterFireExtState::Armed_Idle;
     FlightElement* cs_water_ext_armed_idle = new SendMessage((DataMessage*)&ext_ArmedIdle);
+    cs_water_ext_armed_idle->set_perform_msg("cs_water_ext_armed_idle completed");
     EmptyMsg ext_ThermalScan;
     FlightElement* cs_water_ext_thermal_scan = new SendMessage((DataMessage*)&ext_ThermalScan);
+    cs_water_ext_thermal_scan->set_perform_msg("cs_water_ext_thermal_scan completed");
     EmptyMsg ext_UploadWaterLevel;
     FlightElement* cmd_water_ext_upload_water_level = new SendMessage((DataMessage*)&ext_UploadWaterLevel); //TODO: use
-
+    cmd_water_ext_upload_water_level->set_perform_msg("cmd_water_ext_upload_water_level completed");
+    
     //UGV Nav TODO: add utility
     IntegerMsg ugv_HeadingTowardsEntrance;
     ugv_HeadingTowardsEntrance.data = (int)UGVNavState::HEADINGTOWARDSENTRANCE;
     FlightElement* cs_ugv_nav_heading_towards_entrance = new SendMessage((DataMessage*)&ugv_HeadingTowardsEntrance);
+    cs_ugv_nav_heading_towards_entrance->set_perform_msg("cs_ugv_nav_heading_towards_entrance completed");
     IntegerMsg ugv_HeadingTowardsFireDirection;
     ugv_HeadingTowardsFireDirection.data = (int)UGVPatrolState::HEADINGTOWARDSFIREDIRECTION;
     FlightElement* cs_ugv_nav_heading_towards_fire_direction = new SendMessage((DataMessage*)&ugv_HeadingTowardsFireDirection);
+    cs_ugv_nav_heading_towards_fire_direction->set_perform_msg("cs_ugv_nav_heading_towards_fire_direction completed");
     IntegerMsg ugv_PatrolingAreaCCW;
     ugv_PatrolingAreaCCW.data = (int)UGVPatrolState::PATROLINGCCW;
     FlightElement* cmd_ugv_nav_patroling_area_ccw = new SendMessage((DataMessage*)&ugv_PatrolingAreaCCW);
+    cmd_ugv_nav_patroling_area_ccw->set_perform_msg("cmd_ugv_nav_patroling_area_ccw completed");
     IntegerMsg ugv_HeadingTowardsFire;
     ugv_HeadingTowardsFire.data = (int)UGVNavState::HEADINGTOWARDSFIRE;
     FlightElement* cs_ugv_nav_heading_towards_fire = new SendMessage((DataMessage*)&ugv_HeadingTowardsFire);
+    cs_ugv_nav_heading_towards_fire->set_perform_msg("cs_ugv_nav_heading_towards_fire completed");
     FloatMsg ugv_AdjustingPosition;
     ugv_AdjustingPosition.data = (float)0.25; //moves the robot 0.5 meters ccw, for cw use negative values
     FlightElement* cmd_ugv_nav_position_adjustment = new SendMessage((DataMessage*)&ugv_AdjustingPosition);
+    cmd_ugv_nav_position_adjustment->set_perform_msg("cmd_ugv_nav_position_adjustment completed");
     IntegerMsg ugv_ExtinguishingFire;
     ugv_ExtinguishingFire.data = (int)UGVNavState::EXTINGUISHINGFIRE;
     FlightElement* cs_ugv_nav_extinguishing_fire = new SendMessage((DataMessage*)&ugv_ExtinguishingFire);
+    cs_ugv_nav_extinguishing_fire->set_perform_msg("cs_ugv_nav_extinguishing_fire completed");
     IntegerMsg ugv_ReturningToBase;
     ugv_ReturningToBase.data = (int)UGVNavState::RETURNINGTOBASE;
     FlightElement* cs_ugv_nav_returning_to_base = new SendMessage((DataMessage*)&ugv_ReturningToBase);
+    cs_ugv_nav_returning_to_base->set_perform_msg("cs_ugv_nav_returning_to_base completed");
 
     Wait* ugv_position_adjust_wait = new Wait;
+    ugv_position_adjust_wait->set_perform_msg("ugv_position_adjust_wait in progress");
     ugv_position_adjust_wait->wait_time_ms = 1000;
 
     ////////////////////
 
     Wait* ros_comm_wait = new Wait;
+    ros_comm_wait->set_perform_msg("ros_comm_wait in progress");
     ros_comm_wait->wait_time_ms = 1000;
 
     ////////////////////
 
     InternalSystemStateCondition* error_condition = new InternalSystemStateCondition(GFMMState::ERROR);
     WaitForCondition* error_check = new WaitForCondition((Condition*)error_condition);
+    error_check->set_perform_msg("error_check completed");
 
     InternalSystemStateCondition* not_ready_condition = new InternalSystemStateCondition(GFMMState::NOT_READY);
     WaitForCondition* not_ready_check = new WaitForCondition((Condition*)not_ready_condition);
-
+    not_ready_check->set_perform_msg("not_ready_check completed");
+    
     InternalSystemStateCondition* ready_to_start_condition = new InternalSystemStateCondition(GFMMState::READY_TO_START);
     WaitForCondition* ready_to_start_check = new WaitForCondition((Condition*)ready_to_start_condition);
-
+    ready_to_start_check->set_perform_msg("ready_to_start_check completed");
+    
     InternalSystemStateCondition* heading_towards_entrance_condition = new InternalSystemStateCondition(GFMMState::HEADING_TOWARD_ENTRANCE);
     WaitForCondition* heading_towards_entrance_check = new WaitForCondition((Condition*)heading_towards_entrance_condition);
-
+    heading_towards_entrance_check->set_perform_msg("heading_towards_entrance_check completed");
+    
     InternalSystemStateCondition* searching_for_fire_condition = new InternalSystemStateCondition(GFMMState::SEARCHING_FOR_FIRE);
     WaitForCondition* searching_for_fire_check = new WaitForCondition((Condition*)searching_for_fire_condition);
-
+    searching_for_fire_check->set_perform_msg("searching_for_fire_check completed");
+    
     InternalSystemStateCondition* fire_detected_condition = new InternalSystemStateCondition(GFMMState::FIRE_DETECTED);
     WaitForCondition* fire_detected_check = new WaitForCondition((Condition*)fire_detected_condition);
-
+    fire_detected_check->set_perform_msg("fire_detected_check completed");
+    
     InternalSystemStateCondition* approaching_fire_condition = new InternalSystemStateCondition(GFMMState::APPROACHING_FIRE);
     WaitForCondition* approaching_fire_check = new WaitForCondition((Condition*)approaching_fire_condition);
-
+    approaching_fire_check->set_perform_msg("approaching_fire_check completed");
+    
     InternalSystemStateCondition* positioning_ugv_condition = new InternalSystemStateCondition(GFMMState::POSITIONING_UGV);
     WaitForCondition* positioning_ugv_check = new WaitForCondition((Condition*)positioning_ugv_condition);
-
+    positioning_ugv_check->set_perform_msg("positioning_ugv_check completed");
+    
     InternalSystemStateCondition* extinguishing_fire_condition = new InternalSystemStateCondition(GFMMState::EXTINGUISHING_FIRE);
     WaitForCondition* extinguishing_fire_check = new WaitForCondition((Condition*)extinguishing_fire_condition);
-
+    extinguishing_fire_check->set_perform_msg("extinguishing_fire_check completed");
+    
     InternalSystemStateCondition* return_to_base_condition = new InternalSystemStateCondition(GFMMState::RETURNING_TO_BASE);
     WaitForCondition* return_to_base_check = new WaitForCondition((Condition*)return_to_base_condition);
-
+    return_to_base_check->set_perform_msg("return_to_base_check completed");
+    
     InternalSystemStateCondition* finished_condition = new InternalSystemStateCondition(GFMMState::FINISHED);
     WaitForCondition* finished_check = new WaitForCondition((Condition*)finished_condition);
-
+    finished_check->set_perform_msg("finished_check completed");
+    
     ExternalSystemStateCondition* FireDetection_Error = new ExternalSystemStateCondition((int)FireDetectionState::MALFUNCTION);
     WaitForCondition* fire_detection_error_check = new WaitForCondition((Condition*)FireDetection_Error);
-
+    fire_detection_error_check->set_perform_msg("fire_detection_error_check completed");
+    
     ExternalSystemStateCondition* FireDetection_Idle = new ExternalSystemStateCondition((int)FireDetectionState::IDLE);
     WaitForCondition* fire_detection_idle_check = new WaitForCondition((Condition*)FireDetection_Idle);
-
+    fire_detection_idle_check->set_perform_msg("fire_detection_idle_check completed");
+    
     ExternalSystemStateCondition* FireDetection_ScanningWithDetected = new ExternalSystemStateCondition((int)FireDetectionState::SCANNING_WITH_FIRE_DETECTED);
     WaitForCondition* fire_detection_scanning_with_detected_check = new WaitForCondition((Condition*)FireDetection_ScanningWithDetected);
-
+    fire_detection_scanning_with_detected_check->set_perform_msg("fire_detection_scanning_with_detected_check completed");
+    
     ExternalSystemStateCondition* FireDetection_ScanningWithLocated = new ExternalSystemStateCondition((int)FireDetectionState::SCANNING_WITH_FIRE_LOCATED);
     WaitForCondition* fire_detection_scanning_with_located_check = new WaitForCondition((Condition*)FireDetection_ScanningWithLocated);
-
+    fire_detection_scanning_with_located_check->set_perform_msg("fire_detection_scanning_with_located_check completed");
+    
     ExternalSystemStateCondition* WaterExt_Unarmed = new ExternalSystemStateCondition((int)WaterFireExtState::Unarmed);
     WaitForCondition* water_ext_unarmed_check = new WaitForCondition((Condition*)WaterExt_Unarmed);
-
+    water_ext_unarmed_check->set_perform_msg("water_ext_unarmed_check completed");
+    
     ExternalSystemStateCondition* WaterExt_FireDetected = new ExternalSystemStateCondition((int)WaterFireExtState::Detected);
     WaitForCondition* water_ext_fire_detected_check = new WaitForCondition((Condition*)WaterExt_FireDetected);
-
+    water_ext_fire_detected_check->set_perform_msg("water_ext_fire_detected_check completed");
+    
     ExternalSystemStateCondition* WaterExt_ArmedIdle = new ExternalSystemStateCondition((int)WaterFireExtState::Armed_Idle);
     WaitForCondition* water_ext_armed_idle_check = new WaitForCondition((Condition*)WaterExt_ArmedIdle);
-
+    water_ext_armed_idle_check->set_perform_msg("water_ext_armed_idle_check completed");
+    
     ExternalSystemStateCondition* WaterExt_ArmedExtinguishing = new ExternalSystemStateCondition((int)WaterFireExtState::Armed_Extinguishing);
     WaitForCondition* water_ext_armed_extinguishing_check = new WaitForCondition((Condition*)WaterExt_ArmedExtinguishing);
-
+    water_ext_armed_extinguishing_check->set_perform_msg("water_ext_armed_extinguishing_check completed");
+    
     ExternalSystemStateCondition* WaterExt_ArmedExtinguished = new ExternalSystemStateCondition((int)WaterFireExtState::Armed_Extinguished);
     WaitForCondition* water_ext_armed_extinguished_check = new WaitForCondition((Condition*)WaterExt_ArmedExtinguished);
-
+    water_ext_armed_extinguished_check->set_perform_msg("water_ext_armed_extinguished_check completed");
+    
     ExternalSystemStateCondition* WaterExt_OutOfWater = new ExternalSystemStateCondition((int)WaterFireExtState::OutOfWater);
     WaitForCondition* water_ext_out_of_water_check = new WaitForCondition((Condition*)WaterExt_OutOfWater);
-
+    water_ext_out_of_water_check->set_perform_msg("water_ext_out_of_water_check completed");
+    
     ExternalSystemStateCondition* UGVNav_Idle = new ExternalSystemStateCondition((int)UGVNavState::IDLE);
     WaitForCondition* ugv_nav_idle_check = new WaitForCondition((Condition*)UGVNav_Idle);
-
+    ugv_nav_idle_check->set_perform_msg("ugv_nav_idle_check completed");
+    
     ExternalSystemStateCondition* UGVNav_SearchingForFire = new ExternalSystemStateCondition((int)UGVNavState::SEARCHINGFORFIRE);
     WaitForCondition* ugv_nav_searching_for_fire_check = new WaitForCondition((Condition*)UGVNav_SearchingForFire);
-
+    ugv_nav_searching_for_fire_check->set_perform_msg("ugv_nav_searching_for_fire_check completed");
+    
     ExternalSystemStateCondition* UGVNav_HeadingTowardsFire = new ExternalSystemStateCondition((int)UGVNavState::HEADINGTOWARDSFIRE);
     WaitForCondition* ugv_nav_heading_towards_fire_check = new WaitForCondition((Condition*)UGVNav_HeadingTowardsFire);
-
+    ugv_nav_heading_towards_fire_check->set_perform_msg("ugv_nav_heading_towards_fire_check completed");
+    
     ExternalSystemStateCondition* UGVNav_AlignedWithFire = new ExternalSystemStateCondition((int)UGVNavState::UGVALIGNEDWITHTARGET);
     WaitForCondition* ugv_nav_aligned_with_fire_check = new WaitForCondition((Condition*)UGVNav_AlignedWithFire);
-
+    ugv_nav_aligned_with_fire_check->set_perform_msg("ugv_nav_aligned_with_fire_check completed");
+    
     ExternalSystemStateCondition* UGVNav_ReachedBase = new ExternalSystemStateCondition((int)UGVNavState::REACHEDBASE);
     WaitForCondition* ugv_nav_reached_base_check = new WaitForCondition((Condition*)UGVNav_ReachedBase);
-
+    ugv_nav_reached_base_check->set_perform_msg("ugv_nav_reached_base_check completed");
+    
     // ********************************************************************************
     // ****************************** SYSTEM CONNECTIONS ******************************
     InternalStateUpdaterSrv->add_callback_msg_receiver((msg_receiver*)cs_to_error);

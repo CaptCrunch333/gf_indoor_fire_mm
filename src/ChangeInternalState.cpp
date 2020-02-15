@@ -10,6 +10,7 @@ ChangeInternalState::~ChangeInternalState() {
 
 void ChangeInternalState::perform() {
     mainMissionStateManager.updateMissionState(m_new_state);
+    this->print_info();
 }
 
 void ChangeInternalState::receive_msg_data(DataMessage* t_msg){

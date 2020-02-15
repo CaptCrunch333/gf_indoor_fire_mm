@@ -3,6 +3,7 @@
 void Wait::perform(){
     Timer _wait_timer;
     _wait_timer.tick();
+    this->print_info();
     while (_wait_timer.tockMilliSeconds()<wait_time_ms)
     {}
     

@@ -1,6 +1,6 @@
 #include "InternalSystemStateCondition.hpp"
 
-InternalSystemStateCondition::InternalSystemStateCondition(GFMMState t_check_state){
+InternalSystemStateCondition::InternalSystemStateCondition(GFMMState t_check_state) {
     m_check_state = t_check_state;
 }
 
