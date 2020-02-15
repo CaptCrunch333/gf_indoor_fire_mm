@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "gf_indoor_fire_mm");
     ros::NodeHandle nh;
     // ************************************ LOGGER ************************************
-    Logger::assignLogger(new RosLogger;
+    Logger::assignLogger(new RosLogger);
     Logger::getAssignedLogger()->log("start of logger", LoggerLevel::Info);
     //Logger::getAssignedLogger()->enableFileLog(LoggerLevel::Error);
     // ********************************************************************************
@@ -300,11 +300,30 @@ int main(int argc, char** argv) {
                    fire_located_pipeline, approaching_fire_pipeline, positioning_ugv_success_pipepline,
                    positioning_ugv_failure_pipeline,extinguishing_fire_pipeline, return_to_base_pipeline, error_pipeline;// finished_pipeline;
     
+    not_ready_pipeline.set_msg("not_ready_pipeline");
+    ready_to_start_pipeline.set_msg("ready_to_start_pipeline");
+    heading_towards_entrance_pipeline.set_msg("heading_towards_entrance_pipeline");
+    searching_for_fire_pipeline.set_msg("searching_for_fire_pipeline");
+    detecting_fire_pipeline.set_msg("detecting_fire_pipeline");
+    fire_detected_pipeline.set_msg("fire_detected_pipeline");
+    locating_fire_pipeline.set_msg("locating_fire_pipeline");
+    fire_located_pipeline.set_msg("fire_located_pipeline");
+    approaching_fire_pipeline.set_msg("approaching_fire_pipeline");
+    positioning_ugv_success_pipepline.set_msg("positioning_ugv_success_pipepline");
+    positioning_ugv_failure_pipeline.set_msg("positioning_ugv_failure_pipeline");
+    extinguishing_fire_pipeline.set_msg("extinguishing_fire_pipeline");
+    return_to_base_pipeline.set_msg("return_to_base_pipeline");
+    error_pipeline.set_msg("error_pipeline");
+
     FlightElement* add_searching_fire_pipeline = new AddPipeline(&searching_for_fire_pipeline, &main_scenario);
+    add_searching_fire_pipeline->set_perform_msg("add_searching_fire_pipeline added");
     FlightElement* add_fire_detected_pipeline = new AddPipeline(&fire_detected_pipeline, &main_scenario);
+    add_fire_detected_pipeline->set_perform_msg("add_fire_detected_pipeline added");
     FlightElement* add_positioning_ugv_failure_pipeline = new AddPipeline(&positioning_ugv_failure_pipeline, &main_scenario);
+    add_positioning_ugv_failure_pipeline->set_perform_msg("add_positioning_ugv_failure_pipeline added");
     FlightElement* add_approaching_fire_pipeline = new AddPipeline(&approaching_fire_pipeline, &main_scenario);
-    
+    add_approaching_fire_pipeline->set_perform_msg("add_approaching_fire_pipeline added");
+
     // TODO: add error check
 
     // not_ready_pipeline.addElement((FlightElement*)not_ready_check);

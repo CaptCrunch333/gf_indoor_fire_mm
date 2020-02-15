@@ -24,7 +24,7 @@ void FlightScenario::ResetScenario(){
 //void* FlightScenario::pipelineThreadStarter(void* arg);
 
 void* FlightScenario::pipelineThreadStarter(void* arg){
-    Logger::getAssignedLogger()->log("pthread_cond_wait",LoggerLevel::Info);
+    //Logger::getAssignedLogger()->log("pthread_cond_wait",LoggerLevel::Info);
     //pthread_cond_wait( &condition_cond, &execution_control );
     while (FlightScenario::_start_locked)
     {

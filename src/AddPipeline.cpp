@@ -9,6 +9,7 @@ AddPipeline::AddPipeline(FlightPipeline* t_pipeline, FlightScenario* t_scenario)
 void AddPipeline::perform()
 {
     m_scenario->AddFlightPipeline(m_pipeline);
+    this->print_info();
 }
 
 void AddPipeline::receive_msg_data(DataMessage*)

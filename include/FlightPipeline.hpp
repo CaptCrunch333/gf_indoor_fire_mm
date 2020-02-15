@@ -7,7 +7,7 @@ class FlightPipeline {
 
 private:
     std::list<FlightElement*> _list_of_elements;
-    std::string m_name_msg;
+    std::string m_name_msg = "Pipeline";
 
 public:
 
