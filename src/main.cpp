@@ -37,8 +37,8 @@ int main(int argc, char** argv) {
     ROSUnit* WateLevelUpdateRequesterClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "water_ext/get_water_level"); 
     ROSUnit* UGVNavCtrlUpdaterClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "ugv_nav/set_mission_state");
     ROSUnit* UGVPositionAdjustmentClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Float, "ugv_nav/set_position_adjustment"); // TODO: add to IF
-    ROSUnit* UGVChangePoseClnt = mainROSFactory->CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Pose, "ugv_nav/move_to_goal");
-    ROSUnit* UGVGoToFireLocationClnt = mainROSUnit_Factory->CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Empty, "ugv_nav/go_to_fire_location");
+    ROSUnit* UGVChangePoseClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Pose, "ugv_nav/move_to_goal");
+    ROSUnit* UGVGoToFireLocationClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Empty, "ugv_nav/go_to_fire_location");
     // ********************************************************************************
     // ******************************* FLIGHT ELEMENTS ********************************
     //Internal States //
@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
     FlightElement* cmd_ugv_nav_go_to_entrance = new SendMessage((DataMessage*)&ugv_GoToEntrance);
     cmd_ugv_nav_go_to_entrance->set_perform_msg("cmd_ugv_nav_go_to_entrance completed");
     EmptyMsg* ugv_GoToFireLocation;
-    FlightElement cmd_ugv_nav_go_to_fire_location = new SendMessage((DataMessage*)&ugv_GoToFireLocation);
+    FlightElement* cmd_ugv_nav_go_to_fire_location = new SendMessage((DataMessage*)&ugv_GoToFireLocation);
     cmd_ugv_nav_go_to_fire_location->set_perform_msg("cmd_ugv_nav_go_to_fire_location completed");
 
     Wait* ugv_position_adjust_wait = new Wait;
