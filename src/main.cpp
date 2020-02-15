@@ -12,7 +12,6 @@
 #include "SendMessage.hpp"
 #include "ROSUnit_Factory.hpp"
 #include "MissionStateManager.hpp"
-#include "UGVPatrolStates.hpp"
 
 int main(int argc, char** argv) {
     ros::init(argc, argv, "gf_indoor_fire_mm");
@@ -37,7 +36,6 @@ int main(int argc, char** argv) {
     ROSUnit* WaterExtThermalScanClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Empty, "water_ext/trigger_scan");
     ROSUnit* WateLevelUpdateRequesterClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "water_ext/get_water_level"); 
     ROSUnit* UGVNavCtrlUpdaterClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "ugv_nav/set_mission_state");
-    ROSUnit* UGVPatrolUpdaterClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Int, "ugv_nav/set_patrol_mode");
     ROSUnit* UGVPositionAdjustmentClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Float, "ugv_nav/set_position_adjustment"); // TODO: add to IF
     ROSUnit* UGVChangePoseClnt = mainROSFactory->CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Pose, "ugv_nav/move_to_goal");
     ROSUnit* UGVGoToFireLocationClnt = mainROSUnit_Factory->CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Empty, "ugv_nav/go_to_fire_location");
@@ -102,10 +100,6 @@ int main(int argc, char** argv) {
     cmd_water_ext_upload_water_level->set_perform_msg("cmd_water_ext_upload_water_level completed");
     
     //UGV Nav TODO: add utility
-    IntegerMsg ugv_PatrolingAreaCCW;
-    ugv_PatrolingAreaCCW.data = (int)UGVPatrolState::PATROLINGCCW;
-    FlightElement* cmd_ugv_nav_patroling_area_ccw = new SendMessage((DataMessage*)&ugv_PatrolingAreaCCW);
-    cmd_ugv_nav_patroling_area_ccw->set_perform_msg("cmd_ugv_nav_patroling_area_ccw completed");
     FloatMsg ugv_AdjustingPosition;
     ugv_AdjustingPosition.data = (float)0.25; //moves the robot 0.5 meters ccw, for cw use negative values
     FlightElement* cmd_ugv_nav_position_adjustment = new SendMessage((DataMessage*)&ugv_AdjustingPosition);
@@ -134,9 +128,9 @@ int main(int argc, char** argv) {
 
     ////////////////////
 
-    Wait* ros_comm_wait = new Wait;
-    ros_comm_wait->set_perform_msg("ros_comm_wait in progress");
-    ros_comm_wait->wait_time_ms = 1000;
+    Wait* wait100ms = new Wait;
+    wait100ms->set_perform_msg("wait100ms in progress");
+    wait100ms->wait_time_ms = 100;
 
     ////////////////////
 
@@ -275,7 +269,6 @@ int main(int argc, char** argv) {
     cs_water_ext_idle_state->add_callback_msg_receiver((msg_receiver*) WaterExtStateUpdaterClnt);
     cmd_water_ext_upload_water_level->add_callback_msg_receiver((msg_receiver*) WateLevelUpdateRequesterClnt);
 
-    cmd_ugv_nav_patroling_area_ccw->add_callback_msg_receiver((msg_receiver*) UGVPatrolUpdaterClnt);
     cmd_ugv_nav_position_adjustment->add_callback_msg_receiver((msg_receiver*) UGVPositionAdjustmentClnt);
     cmd_ugv_nav_go_to_entrance->add_callback_msg_receiver((msg_receiver*) UGVChangePoseClnt);
     cmd_ugv_nav_move_to_base->add_callback_msg_receiver((msg_receiver*) UGVChangePoseClnt);
@@ -339,7 +332,7 @@ int main(int argc, char** argv) {
 
     locating_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     locating_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_located_check);
-    //locating_fire_pipeline.addElement((FlightElement*)ros_comm_wait); //TODO: check comm
+    locating_fire_pipeline.addElement((FlightElement*)wait100ms);
     locating_fire_pipeline.addElement((FlightElement*)cmd_ugv_nav_go_to_fire_location);
     locating_fire_pipeline.addElement((FlightElement*)cs_to_approaching_fire);
 
