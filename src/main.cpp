@@ -326,11 +326,11 @@ int main(int argc, char** argv) {
     
     heading_towards_entrance_pipeline.addElement((FlightElement*)heading_towards_entrance_check);
     heading_towards_entrance_pipeline.addElement((FlightElement*)ugv_nav_reached_goal_check);
-    //heading_towards_entrance_pipeline.addElement((FlightElement*)cs_fire_detection_scanning_with_no_detection);
+    heading_towards_entrance_pipeline.addElement((FlightElement*)cs_fire_detection_scanning_with_no_detection);
     heading_towards_entrance_pipeline.addElement((FlightElement*)cs_to_searching_for_fire);
 
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
-    searching_for_fire_pipeline.addElement((FlightElement*)cs_fire_detection_scanning_with_no_detection);
+    //searching_for_fire_pipeline.addElement((FlightElement*)cs_fire_detection_scanning_with_no_detection);
     searching_for_fire_pipeline.addElement((FlightElement*)cmd_fire_detection_start_visual_scan);
     searching_for_fire_pipeline.addElement((FlightElement*)detection_visual_scanning_wait);
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
@@ -340,6 +340,7 @@ int main(int argc, char** argv) {
 
     locating_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
     locating_fire_pipeline.addElement((FlightElement*)fire_detection_scanning_with_located_check);
+    locating_fire_pipeline.addElement((FlightElement*)cs_to_fire_detected);
     locating_fire_pipeline.addElement((FlightElement*)wait100ms);
     locating_fire_pipeline.addElement((FlightElement*)cmd_ugv_nav_go_to_fire_location);
     locating_fire_pipeline.addElement((FlightElement*)cs_to_approaching_fire);
