@@ -12,6 +12,8 @@
 #include "SendMessage.hpp"
 #include "ROSUnit_Factory.hpp"
 #include "MissionStateManager.hpp"
+#include "EulerToQuat.hpp"
+#include "ROSUnit_ACMLReInitialize.hpp"
 
 int main(int argc, char** argv) {
     ros::init(argc, argv, "gf_indoor_fire_mm");
@@ -41,6 +43,11 @@ int main(int argc, char** argv) {
     ROSUnit* UGVPositionAdjustmentClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_msg_type::ROSUnit_Float, "ugv_nav/set_position_adjustment"); // TODO: add to IF
     ROSUnit* UGVChangePoseClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Pose, "ugv_nav/move_to_goal");
     ROSUnit* UGVGoToFireLocationClnt = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Empty, "ugv_nav/go_to_fire_location");
+	
+	//ABDOOO
+	ROSUnit* UGVReInitializeAMCLPub = new ROSUnit_ACMLReInitialize("//ABDOOO", nh);
+    ROSUnit* UGVReInitializeMoveBase = mainROSUnit_Factory.CreateROSUnit(ROSUnit_tx_rx_type::Client, ROSUnit_Empty, "//ABDOOO");
+	
     // ********************************************************************************
     // ******************************* FLIGHT ELEMENTS ********************************
     //Internal States //
@@ -130,6 +137,30 @@ int main(int argc, char** argv) {
     Wait* ugv_position_adjust_wait = new Wait;
     ugv_position_adjust_wait->set_perform_msg("ugv_position_adjust_wait in progress");
     ugv_position_adjust_wait->wait_time_ms = 1000;
+	
+	//ABDOOO
+	//Added two flight elements, basically things that will be executed when called!!!!
+	Vector3DMessage ugv_ReInitializeAMCLPosePoint;
+    Vector3D<float> t_vec;
+	t_vec.x = 0;//add x here
+	t_vec.y = 0;//add y here
+	t_vec.z = 0;//add z here
+    ugv_ReInitializeAMCLPosePoint.setVector3DMessage(t_vec);
+	FlightElement* cmd_set_amcl_pose_point = new SendMessage((DataMessage*)&ugv_ReInitializeAMCLPosePoint);
+	cmd_set_amcl_pose_point->set_perform_msg("cmd_set_amcl_pose_point completed");
+    Vector3DMessage ugv_ReInitializeAMCLPoseHeading;
+    t_vec.x = 0;
+    t_vec.y = 0;
+    t_vec.z = 0; //add heading here
+    ugv_ReInitializeAMCLPoseHeading.setVector3DMessage(t_vec);
+    FlightElement* cmd_set_amcl_pose_heading = new SendMessage((DataMessage*)&ugv_ReInitializeAMCLPoseHeading);
+    cmd_set_amcl_pose_heading->set_perform_msg("cmd_set_amcl_pose_heading completed");
+    EulerToQuat* E2Q = new EulerToQuat;
+	//ABDOOO
+	EmptyMsg ugv_ReInitializeMoveBase;
+	FlightElement* cmd_reinitialize_move_base = new SendMessage((DataMessage*)&ugv_ReInitializeMoveBase);
+	cmd_reinitialize_move_base->set_perform_msg("cmd_reinitialize_move_base completed");
+	//ABDOOO done
 
     ////////////////////
 
@@ -280,6 +311,13 @@ int main(int argc, char** argv) {
     cmd_ugv_nav_go_to_entrance->add_callback_msg_receiver((msg_receiver*) UGVChangePoseClnt);
     cmd_ugv_nav_move_to_base->add_callback_msg_receiver((msg_receiver*) UGVChangePoseClnt);
     cmd_ugv_nav_go_to_fire_location->add_callback_msg_receiver((msg_receiver*) UGVGoToFireLocationClnt);
+
+    //ABDOOO
+    cmd_set_amcl_pose_point->add_callback_msg_receiver((msg_receiver*) UGVReInitializeAMCLPub);
+    cmd_set_amcl_pose_heading->add_callback_msg_receiver((msg_receiver*)E2Q);
+    E2Q->add_callback_msg_receiver((msg_receiver*)UGVReInitializeAMCLPub);
+    cmd_reinitialize_move_base->add_callback_msg_receiver((msg_receiver*)UGVReInitializeMoveBase);
+
     // ********************************************************************************
     // ********************************** PIPELINES ***********************************
     FlightScenario main_scenario;
@@ -319,7 +357,7 @@ int main(int argc, char** argv) {
     // not_ready_pipeline.addElement((FlightElement*)water_ext_unarmed_check);
     // not_ready_pipeline.addElement((FlightElement*)ugv_nav_idle_check);
     // not_ready_pipeline.addElement((FlightElement*)cs_to_ready_to_start); //TODO: enable this check
-    
+
     ready_to_start_pipeline.addElement((FlightElement*)ready_to_start_check);
     ready_to_start_pipeline.addElement((FlightElement*)cmd_ugv_nav_go_to_entrance);
     ready_to_start_pipeline.addElement((FlightElement*)cs_to_heading_toward_entrance);
@@ -327,6 +365,12 @@ int main(int argc, char** argv) {
     heading_towards_entrance_pipeline.addElement((FlightElement*)heading_towards_entrance_check);
     heading_towards_entrance_pipeline.addElement((FlightElement*)ugv_nav_reached_goal_check);
     heading_towards_entrance_pipeline.addElement((FlightElement*)cs_fire_detection_scanning_with_no_detection);
+    //ABDOO
+    //add the reinitialize like this:
+    //heading_towards_entrance_pipeline.addElement((FlightElement*)cmd_set_amcl_pose_point);
+    //heading_towards_entrance_pipeline.addElement((FlightElement*)cmd_set_amcl_pose_heading);
+    //heading_towards_entrance_pipeline.addElement((FlightElement*)cmd_reinitialize_move_base);
+    //ABDOOO
     heading_towards_entrance_pipeline.addElement((FlightElement*)cs_to_searching_for_fire);
 
     searching_for_fire_pipeline.addElement((FlightElement*)searching_for_fire_check);
